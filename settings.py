@@ -48,3 +48,49 @@ BAR_TITLE_STYLE = """
 
 # Titulo de la barra lateral de la compra de boletas
 TICKET_TITLE = "<h1 style = 'font-family: Rockwell; text-align: center'> Compra de boletería </h1> <br>"
+
+THEATER_TITLE_STYLE = """
+    <div style = '
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        padding: 10px 0;
+    '>
+        <div style = '
+            flex: 1;
+            border-top: 2px solid black;
+            border-bottom: 2px solid black;
+            margin: 0 10px;
+        '> </div>
+        <h1 style = 'font-family: Rockwell'> Evento teatro </h1>
+        <div style = '
+            flex: 1;
+            border-top: 2px solid black;
+            border-bottom: 2px solid black;
+            margin: 0 10px;
+        '> </div>
+    </div> """
+
+PHILANTHROPIC_TITLE_STYLE = """
+    <div style = '
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        padding: 10px 0;
+    '>
+        <div style = '
+            flex: 1;
+            border-top: 2px solid black;
+            border-bottom: 2px solid black;
+            margin: 0 10px;
+        '> </div>
+        <h1 style = 'font-family: Rockwell'> Evento teatro </h1>
+        <div style = '
+            flex: 1;
+            border-top: 2px solid black;
+            border-bottom: 2px solid black;
+            margin: 0 10px;
+        '> </div>
+    </div> """

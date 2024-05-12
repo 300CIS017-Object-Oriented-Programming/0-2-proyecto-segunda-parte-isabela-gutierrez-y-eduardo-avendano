@@ -1,5 +1,5 @@
 import streamlit as st
-from settings import TITLE_STYLE, FOOTER, BAR_TITLE_STYLE, BUTTON_STYLE, TICKET_TITLE
+from settings import TITLE_STYLE, FOOTER, BAR_TITLE_STYLE, BUTTON_STYLE, TICKET_TITLE, THEATER_TITLE_STYLE, PHILANTHROPIC_TITLE_STYLE
 from datetime import date  # Muestra el calendario para el registro de fechas
 
 
@@ -8,11 +8,12 @@ def main_screen(gui_controller_obj):
     col1, col2, col3 = st.columns(3)
 
     # Mostrar el estilo de los botones
-    st.markdown(BUTTON_STYLE, unsafe_allow_html=True)
+    st.markdown(BUTTON_STYLE, unsafe_allow_html = True)
 
     with col1:
         if st.button("Comprar boleta", use_container_width = True):
-            buy_ticket(gui_controller_obj)
+            st.session_state['page'] = "buy_ticket"
+            st.rerun()
 
     with col2:
         st.button("Otro", use_container_width = True)
@@ -79,13 +80,14 @@ def input_info(gui_controller_obj):
         st.markdown("<h3 style = 'text-align: center'> Información artista </h3>", unsafe_allow_html = True)
         event_status = st.selectbox("Estado del evento", ["Realizado", "Por realizar", "Cancelado", "Aplazado", "Cerrado"])
 
-        # Opcion para seleccionar la fases de venta
-        sales_phase = st.radio("Fase de venta", ['Preventa', 'Venta regular'], index = 0, format_func = lambda x: x.upper())
+        # Opcion para seleccionar la fases de venta (solo para teatro y bar)
+        if st.session_state['event_type'] != "philanthropic_event":
+            sales_phase = st.radio("Fase de venta", ['Preventa', 'Venta regular'], index = 0, format_func = lambda x: x.upper())
 
-        if sales_phase == "Preventa":
-            ticket_price = st.text_input("Valor de la boleta en preventa")
-        else:
-            ticket_price = st.text_input("Valor de la boleta regular")
+            if sales_phase == "Preventa":
+                ticket_price = st.text_input("Valor de la boleta en preventa")
+            else:
+                ticket_price = st.text_input("Valor de la boleta regular")
 
         # Menú desplegable con el número de artistas
         num_artists = st.selectbox("Numero de artistas", range(1, 5))
@@ -119,40 +121,75 @@ def input_info(gui_controller_obj):
             else:
                 st.warning("Evento bar no creado exitosamente")
 
-        if st.button("Regresar", use_container_width = True):
-            st.session_state['page'] = "show_view"
-            st.rerun()
+    if st.session_state['event_type'] == 'theater_event':
+
+        theather_cost = st.text_input("Alquiler del teatro")
+
+        if st.button("Crear evento teatro", use_container_width = True):
+
+            init_obj = gui_controller_obj.create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theather_cost)
+
+            # Informa al usuario si el evento se creo de manera exitosa
+            if init_obj:
+                st.success("Evento teatro creado exitosamente")
+            else:
+                st.warning("Evento teatro no creado exitosamente")
+
+    if st.session_state['event_type'] == 'philanthropic_event':
+
+        num_sponsor = st.selectbox("Numero de sponsors", range(1, 5))
+
+        cont_sponsor = 0
+        dict_sponsor = {}
+        while cont_sponsor < num_sponsor:
+            sponsor_name = st.text_input("Nombre del patrocinador")
+            sponsor_price = st.text_input("Valor del patrocinador")
+
+            dict_sponsor[sponsor_name] = sponsor_price
+
+            cont_sponsor += 1
+
+        if st.button("Crear evento filantropico", use_container_width = True):
+
+            init_obj = gui_controller_obj.create_philanthropic_event(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, dict_sponsor)
+
+            # Informa al usuario si el evento se creo de manera exitosa
+            if init_obj:
+                st.success("Evento filantropico creado exitosamente")
+            else:
+                st.warning("Evento filantropico no creado exitosamente")
+
+    if st.button("Regresar", use_container_width = True):
+        st.session_state['page'] = "show_view"
+        st.rerun()
 
 
 def buy_ticket(gui_controller_obj):
 
-    # Modificar barra lateral
+    st.markdown(TICKET_TITLE, unsafe_allow_html = True)
+    select_event = st.radio("Tipo de evento", ['Bar', 'Teatro', 'Filantropico'], index=0, format_func=lambda x: x.upper())
 
-    sidebar_expand = True
+    # Imprime todas las opciones de evento que hay en el diccionario
+    dictionary = {}
+    if select_event == "Bar":
+        dictionary = gui_controller_obj.get_dictionary("bar_record")
+    elif select_event == "Teatro":
+        dictionary = gui_controller_obj.get_dictionary("theater_record")
+    elif select_event == "Filantropico":
+        dictionary = gui_controller_obj.get_dictionary("philanthropic_record")
 
-    if sidebar_expand:
-        with st.sidebar:
+    # Crear una lista con las claves del diccionario para mostrarlas
+    options = list(dictionary.keys())
 
-            st.markdown(TICKET_TITLE, unsafe_allow_html = True)
-            select_event = st.radio("Tipo de evento", ['Bar', 'Teatro', 'Filantropico'], index=0, format_func=lambda x: x.upper())
+    select = st.selectbox('Selecciona una opción:', options)
 
-            # Imprime todas las opciones de evento que hay en el diccionario
-            if select_event == "Bar":
+    st.write('Nombre del evento:', select)
 
-                dictionary = gui_controller_obj.get_dictionary("bar_record")
+    user_name = st.text_input("Nombre comprador")
+    user_id = st.text_input("ID del comprador")
 
-                # Crear una lista con las claves del diccionario para mostrarlas
-                options = list(dictionary.keys())
-
-                select = st.selectbox('Selecciona una opción:', options)
-
-                st.write('Nombre del evento:', select)
-
-                user_name = st.text_input("Nombre comprador")
-                user_id = st.text_input("ID del comprador")
-
-        if st.button("Comprar", use_container_width = True):
-            sidebar_expand = False
+    if st.button("Comprar", use_container_width = True):
+        sidebar_expand = False
 
 
 # Estructura de la pagina del bar
@@ -173,4 +210,22 @@ def bar_page(gui_controller_obj):
 
 # Estructura de la pagina del teatro
 def theater_page(gui_controller_obj):
-    st.write("vdf")
+
+    st.markdown(THEATER_TITLE_STYLE, unsafe_allow_html = True)
+    with st.sidebar:
+        st.write(" ")
+
+    st.session_state['event_type'] = 'theater_event'
+
+    input_info(gui_controller_obj)
+
+
+def philanthropic_page(gui_controller_obj):
+
+    st.markdown(PHILANTHROPIC_TITLE_STYLE, unsafe_allow_html = True)
+    with st.sidebar:
+        st.write(" ")
+
+    st.session_state['event_type'] = 'philanthropic_event'
+
+    input_info(gui_controller_obj)

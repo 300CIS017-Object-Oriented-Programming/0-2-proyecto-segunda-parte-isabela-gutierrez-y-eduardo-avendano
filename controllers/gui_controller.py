@@ -1,7 +1,9 @@
 import streamlit as st
 from models.artist import Artist
-from view.view import main_screen, bar_page, theater_page
+from view.view import main_screen, bar_page, theater_page, philanthropic_page, buy_ticket
 from models.bar import Bar
+from models.theater import Theater
+from models.philanthropic import Philanthropic
 from controllers.system_controller import SystemController
 
 
@@ -45,8 +47,14 @@ class GuiController:
             elif st.session_state['page'] == "bar_event":
                 bar_page(gui_controller_obj)
 
-            elif st.session_state['page'] == "theater_event":
+            elif st.session_state['page'] == 'theater_event':
                 theater_page(gui_controller_obj)
+
+            elif st.session_state['page'] == "philanthropic_event":
+                philanthropic_page(gui_controller_obj)
+
+            elif st.session_state['page'] == "buy_ticket":
+                buy_ticket(gui_controller_obj)
 
     # Crea los artistas con su información que participan en cada evento y los almacena en un diccionario
     @staticmethod
@@ -63,20 +71,13 @@ class GuiController:
         # Declaración de una variable para hacer referencia a un objeto de la clase SystemController
         system_obj = SystemController()
 
-        # Crea un estado para almacenar los mapas de los eventos (solo en caso de que no este creado)
+        # Crea un estado para almacenar los diccionarios de los eventos (solo en caso de que no este creado)
         if 'dictionary' not in st.session_state:
+            st.session_state['dictionary'] = {'bar_record': {}}
 
-            # Crea el diccionario y asigna que el interno no existe
-            st.session_state['dictionary'] = {'bar_record': {}, 'bar_record_created': False}
-
-        elif st.session_state['dictionary']['bar_record'] is False:
-
-            # Verifica si el interno ya fue creado
-            if not st.session_state['dictionary']['bar_record_created']:
-
-                # Si no ha sido creado, lo crea y lo marca como existente
-                st.session_state['dictionary']['bar_record'] = {}
-                st.session_state['dictionary']['bar_record_created'] = True
+        # Si no existe en el diccionario, lo añade
+        elif 'bar_record' not in st.session_state['dictionary']:
+            st.session_state['dictionary']['bar_record'] = {}
 
         try:
 
@@ -86,6 +87,60 @@ class GuiController:
             # Agregar un valor al diccionario
             system_obj.add_dictionary('bar_record', event_name, bar_event_obj)
             st.session_state['dictionary']['bar_record'][event_name] = bar_event_obj
+
+            ans = True
+
+        except ValueError:
+            ans = False
+
+        return ans
+
+    @staticmethod
+    def create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theater_rental):
+
+        system_obj = SystemController()
+
+        if 'dictionary' not in st.session_state:
+            st.session_state['dictionary'] = {'theater_record': {}}
+
+        elif 'theater_record' not in st.session_state['dictionary']:
+            st.session_state['dictionary']['theater_record'] = {}
+
+        try:
+
+            # Crea el evento de la clase bar con toda la información
+            theater_event_obj = Theater(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theater_rental)
+
+            # Agregar un valor al diccionario
+            system_obj.add_dictionary('theater_record', event_name, theater_event_obj)
+            st.session_state['dictionary']['theater_record'][event_name] = theater_event_obj
+
+            ans = True
+
+        except ValueError:
+            ans = False
+
+        return ans
+
+    @staticmethod
+    def create_philanthropic_event(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, sponsors):
+
+        system_obj = SystemController()
+
+        if 'dictionary' not in st.session_state:
+            st.session_state['dictionary'] = {'philanthropic_record': {}}
+
+        elif 'philanthropic_record' not in st.session_state['dictionary']:
+            st.session_state['dictionary']['philanthropic_record'] = {}
+
+        try:
+
+            # Crea el evento de la clase bar con toda la información
+            philanthropic_event_obj = Philanthropic(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, sponsors)
+
+            # Agregar un valor al diccionario
+            system_obj.add_dictionary('philanthropic_record', event_name, philanthropic_event_obj)
+            st.session_state['dictionary']['philanthropic_record'][event_name] = philanthropic_event_obj
 
             ans = True
 
