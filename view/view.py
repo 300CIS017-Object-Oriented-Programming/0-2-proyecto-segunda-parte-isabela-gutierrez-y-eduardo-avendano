@@ -12,7 +12,6 @@ def main_screen(gui_controller_obj):
 
     with col1:
         if st.button("Comprar boleta", use_container_width = True):
-            st.session_state['page'] = 'buy_ticket'
             buy_ticket(gui_controller_obj)
 
     with col2:
@@ -40,7 +39,7 @@ def main_screen(gui_controller_obj):
 
         # Cargar contenido de la pagina del teatro
         if st.button("Nuevo evento Teatro", use_container_width = True):
-            st.session_state['page'] = "teatro_event"
+            st.session_state['page'] = "theater_event"
             st.rerun()
 
     with col3:
@@ -127,19 +126,36 @@ def input_info(gui_controller_obj):
 
 def buy_ticket(gui_controller_obj):
 
-    with st.sidebar:
+    # Modificar barra lateral
 
-        st.markdown(TICKET_TITLE, unsafe_allow_html = True)
-        select_event = st.selectbox("Tipo de evento", ["Bar", "Teatro", "Filantropico"])
+    sidebar_expand = True
 
-        # Imprime todas las opciones de evento que hay en el diccionario
-        # if select_event == "Bar":
-        dictionary = gui_controller_obj.get_dictionary("bar_record")
+    if sidebar_expand:
+        with st.sidebar:
 
-        for clave in dictionary.keys():
-            st.write(clave)
+            st.markdown(TICKET_TITLE, unsafe_allow_html = True)
+            select_event = st.radio("Tipo de evento", ['Bar', 'Teatro', 'Filantropico'], index=0, format_func=lambda x: x.upper())
+
+            # Imprime todas las opciones de evento que hay en el diccionario
+            if select_event == "Bar":
+
+                dictionary = gui_controller_obj.get_dictionary("bar_record")
+
+                # Crear una lista con las claves del diccionario para mostrarlas
+                options = list(dictionary.keys())
+
+                select = st.selectbox('Selecciona una opción:', options)
+
+                st.write('Nombre del evento:', select)
+
+                user_name = st.text_input("Nombre comprador")
+                user_id = st.text_input("ID del comprador")
+
+        if st.button("Comprar", use_container_width = True):
+            sidebar_expand = False
 
 
+# Estructura de la pagina del bar
 def bar_page(gui_controller_obj):
 
     st.markdown(BAR_TITLE_STYLE, unsafe_allow_html = True)
@@ -153,3 +169,8 @@ def bar_page(gui_controller_obj):
     # Barra lateral con el resumen del evento que se esta creando
     with st.sidebar:
         st.write(" ")
+
+
+# Estructura de la pagina del teatro
+def theater_page(gui_controller_obj):
+    st.write("vdf")

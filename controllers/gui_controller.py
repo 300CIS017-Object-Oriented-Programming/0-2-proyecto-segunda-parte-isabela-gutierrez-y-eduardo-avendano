@@ -1,6 +1,6 @@
 import streamlit as st
 from models.artist import Artist
-from view.view import main_screen, bar_page
+from view.view import main_screen, bar_page, theater_page
 from models.bar import Bar
 from controllers.system_controller import SystemController
 
@@ -45,6 +45,9 @@ class GuiController:
             elif st.session_state['page'] == "bar_event":
                 bar_page(gui_controller_obj)
 
+            elif st.session_state['page'] == "theater_event":
+                theater_page(gui_controller_obj)
+
     # Crea los artistas con su información que participan en cada evento y los almacena en un diccionario
     @staticmethod
     def create_artist(artist_name, artist_price, artist_time):
@@ -70,7 +73,6 @@ class GuiController:
 
             # Verifica si el interno ya fue creado
             if not st.session_state['dictionary']['bar_record_created']:
-                st.write("si")
 
                 # Si no ha sido creado, lo crea y lo marca como existente
                 st.session_state['dictionary']['bar_record'] = {}
@@ -84,7 +86,6 @@ class GuiController:
             # Agregar un valor al diccionario
             system_obj.add_dictionary('bar_record', event_name, bar_event_obj)
             st.session_state['dictionary']['bar_record'][event_name] = bar_event_obj
-            st.write(st.session_state)
 
             ans = True
 
@@ -97,8 +98,6 @@ class GuiController:
     def get_dictionary(dict_name):
 
         system_obj = SystemController()
-
-        st.write(system_obj.size_diccionarios())
 
         # Obtener el diccionario para utiliza la información fuera de la clase
         dictionary = system_obj.get_diccionario(dict_name)
