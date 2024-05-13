@@ -178,8 +178,12 @@ def buy_ticket(gui_controller_obj):
     elif select_event == "Filantropico":
         dictionary = gui_controller_obj.get_dictionary("philanthropic_record")
 
-    # Crear una lista con las claves del diccionario para mostrarlas
-    options = list(dictionary.keys())
+    options = []
+    if not dictionary:
+        st.write("No hay eventos disponibles")
+    else:
+        # Crear una lista con las claves del diccionario para mostrarlas
+        options = list(dictionary.keys())
 
     select = st.selectbox('Selecciona una opción:', options)
 
