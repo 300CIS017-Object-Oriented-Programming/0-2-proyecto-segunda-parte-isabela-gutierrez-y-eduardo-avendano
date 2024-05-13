@@ -10,3 +10,6 @@ class Theater(Event):
         self.ticket_price = ticket_price
         self.final_ticket_price = ticket_price
         self.ticket_sold = 0
+
+    def get_ticket_price(self):
+        return self.ticket_price

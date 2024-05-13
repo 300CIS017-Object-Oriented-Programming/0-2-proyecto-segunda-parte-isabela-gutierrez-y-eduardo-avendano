@@ -11,3 +11,6 @@ class Bar(Event):
         self.ticket_price = ticket_price
         self.money_event = 0
         self.tickets_sold = 0
+
+    def get_ticket_price(self):
+        return self.ticket_price
