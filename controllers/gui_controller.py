@@ -8,18 +8,19 @@ from controllers.system_controller import SystemController
 
 
 # Relacion entre las funciones de las clases y el view (la parte grafica)
-class GuiController:
+class GuiController(SystemController):
 
     # Se asegura que solo exista una unica instancia de la clase GuiController
     _instance = None
 
     def __new__(cls):
         if cls._instance is None:
-            cls._instance = super().__new__(cls)
+            cls._instance = SystemController.__new__(cls)
             cls._instance.__initialized = False
         return cls._instance
 
     def __init__(self):
+        super().__init__()
         self.__initialized = True
 
     # Es un metodo estatico ya que no se modifica ninguna variable (no modifica nada)
@@ -68,9 +69,6 @@ class GuiController:
     @staticmethod
     def create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info):
 
-        # Declaración de una variable para hacer referencia a un objeto de la clase SystemController
-        system_obj = SystemController()
-
         # Crea un estado para almacenar los diccionarios de los eventos (solo en caso de que no este creado)
         if 'dictionary' not in st.session_state:
             st.session_state['dictionary'] = {'bar_record': {}}
@@ -85,7 +83,7 @@ class GuiController:
             bar_event_obj = Bar(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info)
 
             # Agregar un valor al diccionario
-            system_obj.add_dictionary('bar_record', event_name, bar_event_obj)
+            SystemController.add_dictionary('bar_record', event_name, bar_event_obj)
             st.session_state['dictionary']['bar_record'][event_name] = bar_event_obj
 
             ans = True
@@ -97,8 +95,6 @@ class GuiController:
 
     @staticmethod
     def create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theater_rental):
-
-        system_obj = SystemController()
 
         if 'dictionary' not in st.session_state:
             st.session_state['dictionary'] = {'theater_record': {}}
@@ -112,7 +108,7 @@ class GuiController:
             theater_event_obj = Theater(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theater_rental)
 
             # Agregar un valor al diccionario
-            system_obj.add_dictionary('theater_record', event_name, theater_event_obj)
+            SystemController.add_dictionary('theater_record', event_name, theater_event_obj)
             st.session_state['dictionary']['theater_record'][event_name] = theater_event_obj
 
             ans = True
@@ -125,8 +121,6 @@ class GuiController:
     @staticmethod
     def create_philanthropic_event(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, sponsors):
 
-        system_obj = SystemController()
-
         if 'dictionary' not in st.session_state:
             st.session_state['dictionary'] = {'philanthropic_record': {}}
 
@@ -138,8 +132,8 @@ class GuiController:
             # Crea el evento de la clase bar con toda la información
             philanthropic_event_obj = Philanthropic(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, sponsors)
 
-            # Agregar un valor al diccionario
-            system_obj.add_dictionary('philanthropic_record', event_name, philanthropic_event_obj)
+            # Agregar un valor al diccionario (se utiliza la herencia)
+            SystemController.add_dictionary('philanthropic_record', event_name, philanthropic_event_obj)
             st.session_state['dictionary']['philanthropic_record'][event_name] = philanthropic_event_obj
 
             ans = True
@@ -152,9 +146,7 @@ class GuiController:
     @staticmethod
     def get_dictionary(dict_name):
 
-        system_obj = SystemController()
-
         # Obtener el diccionario para utiliza la información fuera de la clase
-        dictionary = system_obj.get_diccionario(dict_name)
+        dictionary = SystemController.get_diccionario(dict_name)
 
         return dictionary
