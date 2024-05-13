@@ -1,1 +1,5 @@
-streamlit == 1.28.0
+# Instalar versión necesaria de Streamlit
+streamlit == 1.30.0
+
+# Para ejecutar las pruebas unitarias
+pytest
