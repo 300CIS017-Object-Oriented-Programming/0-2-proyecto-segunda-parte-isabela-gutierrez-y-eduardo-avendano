@@ -6,6 +6,8 @@ from models.bar import Bar
 from models.theater import Theater
 from models.philanthropic import Philanthropic
 from controllers.system_controller import SystemController
+from reportlab.pdfgen import canvas  # Libreria para generar el PDF
+from io import BytesIO
 
 
 # Relacion entre las funciones de las clases y el view (la parte grafica)
@@ -157,11 +159,11 @@ class GuiController(SystemController):
 
     # Crea los objetos de los nuevos usuarios
     @staticmethod
-    def new_user(name, last_name, user_id, user_mail, event_name):
+    def new_user(name, last_name, user_id, user_mail, event_name, reason):
 
         try:
             # Llama al constructor de la clase para crear el objeto
-            user_obj = User(name, last_name, user_id, user_mail)
+            user_obj = User(name, last_name, user_id, user_mail, reason)
 
             if st.session_state['event_type'] == 'bar_event':
 
@@ -174,11 +176,7 @@ class GuiController(SystemController):
 
                 # Obtiene valores para asginar la utilidad
 
-                ticket_price_str = (bar_obj.get_ticket_price())
-                ticket_price = 0
-                if ticket_price_str:
-                    # Convertir el string a int para poder hacer calculos
-                    ticket_price = int(ticket_price_str)
+                ticket_price = bar_obj.get_ticket_price()
 
                 # Asigna la utilidad del bar
                 total_bar = ticket_price * 0.2
@@ -202,11 +200,7 @@ class GuiController(SystemController):
                 theater_obj.add_ticket()
 
                 # Obtiene valores para asginar la utilidad
-                ticket_price_str = (theater_obj.get_ticket_price())
-                ticket_price = 0
-                if ticket_price_str:
-                    # Convertir el string a int para poder hacer calculos
-                    ticket_price = int(ticket_price_str)
+                ticket_price = theater_obj.get_ticket_price()
 
                 # Asigna la utilidad del bar
                 total_theater = ticket_price * 0.07
@@ -220,7 +214,7 @@ class GuiController(SystemController):
 
             ans = True
 
-        except ValueError as e:
+        except ValueError:
 
             ans = False
 
@@ -306,9 +300,41 @@ class GuiController(SystemController):
                 st.session_state['dictionary']['theater_record'].pop(event_name)
 
             if st.session_state['event_type'] == 'philanthropic_event':
-                phil_obj = st.session_state['dictionary']['philanthropic_record'].pop(event_name)
+                st.session_state['dictionary']['philanthropic_record'].pop(event_name)
 
         except ValueError:
             ans = False
 
         return ans
+
+    # Obtener el aforo maximo del evento
+    @staticmethod
+    def get_capacity(event_name):
+
+        ans = 0
+
+        # Ingresar el objeto del evento para obtener la información
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            ans = bar_obj.get_capacity()
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            ans = theater_obj.get_capacity()
+
+        if st.session_state['event_type'] == 'philanthropic_event':
+            phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+            ans = phil_obj.get_capacity()
+
+        return ans
+
+    # Generar el PDF para imprimirlo
+    @staticmethod
+    def create_pdf():
+        # Crear un archivo PDF
+        buffer = BytesIO()
+        c = canvas.Canvas(buffer)
+        c.drawString(100, 750, "Hello, World!")
+        c.save()
+        pdf_bytes = buffer.getvalue()
+        return pdf_bytes

@@ -57,3 +57,6 @@ class Event:
 
     def get_tickets_sold(self):
         return self.tickets_sold
+
+    def get_capacity(self):
+        return self.capacity

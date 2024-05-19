@@ -13,3 +13,6 @@ class Theater(Event):
 
     def get_ticket_price(self):
         return self.ticket_price
+
+    def set_utility(self, utility):
+        self.utility += utility

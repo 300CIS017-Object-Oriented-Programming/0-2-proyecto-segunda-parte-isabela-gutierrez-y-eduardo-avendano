@@ -3,3 +3,6 @@ streamlit == 1.30.0
 
 # Para ejecutar las pruebas unitarias
 pytest
+
+# Generar el PDF de la boleta
+reportlab

@@ -7,4 +7,3 @@ class Philanthropic(Event):
         super().__init__(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, capacity)
 
         self.sponsors = sponsors
-

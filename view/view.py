@@ -77,7 +77,7 @@ def input_info(gui_controller_obj):
         place = st.text_input("Lugar del evento")
         address = st.text_input("Dirección del evento")
         city = st.text_input("Ciudad del evento")
-        capacity = st.text_input("Capacidad del evento")
+        capacity = st.number_input("Capacidad del evento")
 
     with col2:
 
@@ -89,9 +89,9 @@ def input_info(gui_controller_obj):
             sales_phase = st.radio("Fase de venta", ['Preventa', 'Venta regular'], index = 0, format_func = lambda x: x.upper())
 
             if sales_phase == "Preventa":
-                ticket_price = st.text_input("Valor de la boleta en preventa")
+                ticket_price = st.number_input("Valor de la boleta en preventa")
             else:
-                ticket_price = st.text_input("Valor de la boleta regular")
+                ticket_price = st.number_input("Valor de la boleta regular")
 
         # Menú desplegable con el número de artistas
         num_artists = st.selectbox("Numero de artistas", range(1, 5))
@@ -185,43 +185,57 @@ def buy_ticket(gui_controller_obj):
         dictionary = gui_controller_obj.get_dictionary("theater_record")
     elif select_event == "Filantropico":
         st.session_state['event_type'] = "philanthropic_event"
-
         dictionary = gui_controller_obj.get_dictionary("philanthropic_record")
 
-    options = []
     if not dictionary:
         st.write("No hay eventos disponibles")
     else:
         # Crear una lista con las claves del diccionario para mostrarlas
         options = list(dictionary.keys())
 
-    select = st.selectbox('Selecciona una opción:', options)
+        select = st.selectbox('Selecciona una opción:', options)
 
-    st.write('Nombre del evento:', select)
+        if gui_controller_obj.get_sold(select) < gui_controller_obj.get_capacity(select):
 
-    first_name = st.text_input("Nombre comprador")
-    last_name = st.text_input("Apellido comprador")
-    user_id = st.text_input("ID del comprador")
-    user_mail = st.text_input("Correo electronico")
+            st.write('Nombre del evento:', select)
 
-    if st.session_state['event_type'] == "philanthropic_event":
+            first_name = st.text_input("Nombre comprador")
+            last_name = st.text_input("Apellido comprador")
+            user_id = st.text_input("ID del comprador")
+            user_mail = st.text_input("Correo electronico")
+            reason = st.text_input("Como se entero del evento")
 
-        if st.button("Registrar usuario", use_container_width = True):
-            ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select)
+            if st.session_state['event_type'] == "philanthropic_event":
 
-            if ans:
-                st.success("El usuario fue registrado exitosamente")
-            elif not ans:
-                st.warning("El usuario no fue registrado exitosamente")
-    else:
+                if st.button("Registrar usuario", use_container_width = True):
+                    ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason)
 
-        if st.button("Comprar boleta", use_container_width = True):
-            ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select)
+                    if ans:
+                        st.success("El usuario fue registrado exitosamente")
+                    elif not ans:
+                        st.warning("El usuario no fue registrado exitosamente")
+            else:
 
-            if ans:
-                st.success("La boleta fue creada exitosamente")
-            elif not ans:
-                st.warning("La boleta no fue creada exitosamente")
+                if st.button("Comprar boleta", use_container_width = True):
+                    ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason)
+
+                    if ans:
+                        st.success("La boleta fue creada exitosamente")
+                    elif not ans:
+                        st.warning("La boleta no fue creada exitosamente")
+
+            # Asignar valor de descuento
+            discount = st.radio("Aplicar descuento", ['Si', 'No'], index=0, format_func=lambda x: x.upper())
+
+            if discount == 'Si':
+                st.number_input("Porcentaje del descuento")
+
+            if st.button("Generar PDF"):
+                pdf_bytes = gui_controller_obj.create_pdf()
+                st.download_button(label = "Descargar PDF", data = pdf_bytes, file_name = "boleta.pdf", mime = "application/pdf")
+
+        else:
+            st.write("La capacidad del evento esta completa")
 
     if st.button("Regresar", use_container_width = True):
         st.session_state['page'] = "show_view"
@@ -286,7 +300,6 @@ def modify_page(gui_controller_obj):
         st.session_state['event_type'] = "philanthropic_event"
         dictionary = gui_controller_obj.get_dictionary("philanthropic_record")
 
-    options = []
     if not dictionary:
         st.write("No hay eventos disponibles")
     else:
