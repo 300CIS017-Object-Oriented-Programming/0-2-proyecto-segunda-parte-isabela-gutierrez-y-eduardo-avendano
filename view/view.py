@@ -1,9 +1,9 @@
 import streamlit as st
-from settings import TITLE_STYLE, FOOTER, BAR_TITLE_STYLE, BUTTON_STYLE, TICKET_TITLE, THEATER_TITLE_STYLE, PHILANTHROPIC_TITLE_STYLE
+from settings import TITLE_STYLE, FOOTER, BAR_TITLE_STYLE, BUTTON_STYLE, TICKET_TITLE, THEATER_TITLE_STYLE, PHILANTHROPIC_TITLE_STYLE, TITLE_MODIFICATION
 from datetime import date  # Muestra el calendario para el registro de fechas
 
 
-def main_screen(gui_controller_obj):
+def main_screen():
 
     col1, col2, col3 = st.columns(3)
 
@@ -16,7 +16,10 @@ def main_screen(gui_controller_obj):
             st.rerun()
 
     with col2:
-        st.button("Otro", use_container_width = True)
+        if st.button("Modificar estado", use_container_width = True):
+            st.session_state['page'] = "modify"
+            st.rerun()
+
     with col3:
         st.button("Otra cosa", use_container_width = True)
 
@@ -74,6 +77,7 @@ def input_info(gui_controller_obj):
         place = st.text_input("Lugar del evento")
         address = st.text_input("Dirección del evento")
         city = st.text_input("Ciudad del evento")
+        capacity = st.text_input("Capacidad del evento")
 
     with col2:
 
@@ -103,7 +107,7 @@ def input_info(gui_controller_obj):
             artist_time = st.text_input(f"Hora de presentación del artista {artist_counter + 1}")
 
             artist_obj_info = gui_controller_obj.create_artist(artist_name, artist_price, artist_time)
-            artist_info = {artist_name: artist_obj_info}
+            artist_info[artist_name] = artist_obj_info
 
             artist_counter += 1
 
@@ -113,7 +117,7 @@ def input_info(gui_controller_obj):
         if st.button("Crear evento Bar", use_container_width = True):
 
             # Se pasan los valores de los parametros para crear el objeto
-            init_obj = gui_controller_obj.create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info)
+            init_obj = gui_controller_obj.create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, capacity)
 
             # Informa al usuario si el evento se creo de manera exitosa
             if init_obj:
@@ -127,7 +131,7 @@ def input_info(gui_controller_obj):
 
         if st.button("Crear evento teatro", use_container_width = True):
 
-            init_obj = gui_controller_obj.create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theather_cost)
+            init_obj = gui_controller_obj.create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theather_cost, capacity)
 
             # Informa al usuario si el evento se creo de manera exitosa
             if init_obj:
@@ -151,7 +155,7 @@ def input_info(gui_controller_obj):
 
         if st.button("Crear evento filantropico", use_container_width = True):
 
-            init_obj = gui_controller_obj.create_philanthropic_event(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, dict_sponsor)
+            init_obj = gui_controller_obj.create_philanthropic_event(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, dict_sponsor, capacity)
 
             # Informa al usuario si el evento se creo de manera exitosa
             if init_obj:
@@ -166,16 +170,22 @@ def input_info(gui_controller_obj):
 
 def buy_ticket(gui_controller_obj):
 
+    st.session_state['page'] = "buy_ticket"
+
     st.markdown(TICKET_TITLE, unsafe_allow_html = True)
-    select_event = st.radio("Tipo de evento", ['Bar', 'Teatro', 'Filantropico'], index=0, format_func=lambda x: x.upper())
+    select_event = st.radio("Tipo de evento", ['Bar', 'Teatro', 'Filantropico'], index = 0, format_func = lambda x: x.upper())
 
     # Imprime todas las opciones de evento que hay en el diccionario
     dictionary = {}
     if select_event == "Bar":
+        st.session_state['event_type'] = "bar_event"
         dictionary = gui_controller_obj.get_dictionary("bar_record")
     elif select_event == "Teatro":
+        st.session_state['event_type'] = "theater_event"
         dictionary = gui_controller_obj.get_dictionary("theater_record")
     elif select_event == "Filantropico":
+        st.session_state['event_type'] = "philanthropic_event"
+
         dictionary = gui_controller_obj.get_dictionary("philanthropic_record")
 
     options = []
@@ -189,11 +199,33 @@ def buy_ticket(gui_controller_obj):
 
     st.write('Nombre del evento:', select)
 
-    user_name = st.text_input("Nombre comprador")
+    first_name = st.text_input("Nombre comprador")
+    last_name = st.text_input("Apellido comprador")
     user_id = st.text_input("ID del comprador")
+    user_mail = st.text_input("Correo electronico")
 
-    if st.button("Comprar", use_container_width = True):
-        sidebar_expand = False
+    if st.session_state['event_type'] == "philanthropic_event":
+
+        if st.button("Registrar usuario", use_container_width = True):
+            ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select)
+
+            if ans:
+                st.success("El usuario fue registrado exitosamente")
+            elif not ans:
+                st.warning("El usuario no fue registrado exitosamente")
+    else:
+
+        if st.button("Comprar boleta", use_container_width = True):
+            ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select)
+
+            if ans:
+                st.success("La boleta fue creada exitosamente")
+            elif not ans:
+                st.warning("La boleta no fue creada exitosamente")
+
+    if st.button("Regresar", use_container_width = True):
+        st.session_state['page'] = "show_view"
+        st.rerun()
 
 
 # Estructura de la pagina del bar
@@ -233,3 +265,75 @@ def philanthropic_page(gui_controller_obj):
     st.session_state['event_type'] = 'philanthropic_event'
 
     input_info(gui_controller_obj)
+
+
+def modify_page(gui_controller_obj):
+
+    st.session_state['page'] = "modify"
+
+    st.markdown(TITLE_MODIFICATION, unsafe_allow_html = True)
+    select_event = st.radio("Tipo de evento", ['Bar', 'Teatro', 'Filantropico'], index = 0, format_func = lambda x: x.upper())
+
+    # Imprime todas las opciones de evento que hay en el diccionario
+    dictionary = {}
+    if select_event == "Bar":
+        st.session_state['event_type'] = "bar_event"
+        dictionary = gui_controller_obj.get_dictionary("bar_record")
+    elif select_event == "Teatro":
+        st.session_state['event_type'] = "theater_event"
+        dictionary = gui_controller_obj.get_dictionary("theater_record")
+    elif select_event == "Filantropico":
+        st.session_state['event_type'] = "philanthropic_event"
+        dictionary = gui_controller_obj.get_dictionary("philanthropic_record")
+
+    options = []
+    if not dictionary:
+        st.write("No hay eventos disponibles")
+    else:
+        # Crear una lista con las claves del diccionario para mostrarlas
+        options = list(dictionary.keys())
+
+        select = st.selectbox('Selecciona una opción:', options)
+        st.write('Nombre del evento:', select)
+
+        # Seleccionar que tipo de modificación se le va a realizar al evento
+        select_event = st.radio("Tipo de modificación", ['Modificar estado', 'Eliminar evento'], index = 0, format_func = lambda x: x.upper())
+        # Obtiene el estado del evento
+        event_status = gui_controller_obj.get_status(select)
+
+        if select_event == "Modificar estado":
+
+            # Verifica el estado del evento para saber si se puede realizar
+            if event_status == "Realizado":
+                st.write("El evento ya ha sido realizado, no se puede modificar")
+            else:
+
+                # Modifica el estado del evento
+                st.write("Seleccionar nuevo estado")
+                event_status = st.selectbox("Estado del evento", ["Realizado", "Por realizar", "Cancelado", "Aplazado", "Cerrado"])
+
+                if st.button("Modificar evento", use_container_width = True):
+                    ans = gui_controller_obj.set_status(event_status, select)
+
+                    if ans:
+                        st.success("El estado fue modificado exitosamente")
+                    else:
+                        st.warning("El estado no fue modificado")
+
+        else:
+
+            if gui_controller_obj.get_sold(select) > 0:
+                st.warning('No se puede eliminar el evento, tiene boleteria vendida')
+            else:
+
+                if st.button("Eliminar evento", use_container_width = True):
+                    ans = gui_controller_obj.delete_event(select)
+
+                    if ans:
+                        st.success("El evento fue eliminado")
+                    else:
+                        st.warning("El evento no fue eliminado")
+
+    if st.button("Regresar", use_container_width = True):
+        st.session_state['page'] = "show_view"
+        st.rerun()

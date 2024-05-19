@@ -5,6 +5,7 @@ class Artist:
         self.name = artist_name
         self.money = artist_money
         self.time = artist_hour
+        self.artist_utility = 0
 
     # Obtener el valor del nombre
     def get_name(self):
@@ -13,3 +14,9 @@ class Artist:
     # Obtener el dinero del artista
     def get_money(self):
         return self.money
+
+    def set_utility(self, utility):
+        self.artist_utility = utility
+
+    def get_artist_utility(self):
+        return self.artist_utility

@@ -94,3 +94,5 @@ PHILANTHROPIC_TITLE_STYLE = """
             margin: 0 10px;
         '> </div>
     </div> """
+
+TITLE_MODIFICATION = "<h1 style = 'font-family: Rockwell; text-align: center'> Modificar evento </h1> <br>"
