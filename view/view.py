@@ -1,11 +1,12 @@
 import streamlit as st
-from settings import TITLE_STYLE, FOOTER, BAR_TITLE_STYLE, BUTTON_STYLE, TICKET_TITLE, THEATER_TITLE_STYLE, PHILANTHROPIC_TITLE_STYLE, TITLE_MODIFICATION
+from settings import TITLE_STYLE, FOOTER, BAR_TITLE_STYLE, BUTTON_STYLE, TICKET_TITLE, THEATER_TITLE_STYLE, PHILANTHROPIC_TITLE_STYLE, TITLE_MODIFICATION, REGISTRATION_TITLE
 from datetime import date  # Muestra el calendario para el registro de fechas
 
 
+# Pagina principal
 def main_screen():
 
-    col1, col2, col3 = st.columns(3)
+    col1, col2, col3, col4 = st.columns(4)
 
     # Mostrar el estilo de los botones
     st.markdown(BUTTON_STYLE, unsafe_allow_html = True)
@@ -21,7 +22,14 @@ def main_screen():
             st.rerun()
 
     with col3:
-        st.button("Otra cosa", use_container_width = True)
+        if st.button("Registrar ingreso", use_container_width = True):
+            st.session_state['page'] = "record"
+            st.rerun()
+
+    with col4:
+        if st.button("Generar reporte", use_container_width = True):
+            st.session_state['page'] = "report"
+            st.rerun()
 
     # Asignar titulo y barra superior
     st.markdown(TITLE_STYLE, unsafe_allow_html = True)
@@ -77,7 +85,7 @@ def input_info(gui_controller_obj):
         place = st.text_input("Lugar del evento")
         address = st.text_input("Dirección del evento")
         city = st.text_input("Ciudad del evento")
-        capacity = st.number_input("Capacidad del evento")
+        capacity = st.number_input("Capacidad del evento", step = 1)
 
     with col2:
 
@@ -89,9 +97,9 @@ def input_info(gui_controller_obj):
             sales_phase = st.radio("Fase de venta", ['Preventa', 'Venta regular'], index = 0, format_func = lambda x: x.upper())
 
             if sales_phase == "Preventa":
-                ticket_price = st.number_input("Valor de la boleta en preventa")
+                ticket_price = st.number_input("Valor de la boleta en preventa", step = 1)
             else:
-                ticket_price = st.number_input("Valor de la boleta regular")
+                ticket_price = st.number_input("Valor de la boleta regular", step = 1)
 
         # Menú desplegable con el número de artistas
         num_artists = st.selectbox("Numero de artistas", range(1, 5))
@@ -117,7 +125,7 @@ def input_info(gui_controller_obj):
         if st.button("Crear evento Bar", use_container_width = True):
 
             # Se pasan los valores de los parametros para crear el objeto
-            init_obj = gui_controller_obj.create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, capacity)
+            init_obj = gui_controller_obj.create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, capacity, sales_phase)
 
             # Informa al usuario si el evento se creo de manera exitosa
             if init_obj:
@@ -131,7 +139,7 @@ def input_info(gui_controller_obj):
 
         if st.button("Crear evento teatro", use_container_width = True):
 
-            init_obj = gui_controller_obj.create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theather_cost, capacity)
+            init_obj = gui_controller_obj.create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theather_cost, capacity, sales_phase)
 
             # Informa al usuario si el evento se creo de manera exitosa
             if init_obj:
@@ -168,6 +176,7 @@ def input_info(gui_controller_obj):
         st.rerun()
 
 
+# Funcion para realizar la compra y generación de boletas
 def buy_ticket(gui_controller_obj):
 
     st.session_state['page'] = "buy_ticket"
@@ -205,10 +214,18 @@ def buy_ticket(gui_controller_obj):
             user_mail = st.text_input("Correo electronico")
             reason = st.text_input("Como se entero del evento")
 
+            # Asignar valor de descuento
+            discount = st.radio("Aplicar descuento", ['Si', 'No'], index = 0, format_func = lambda x: x.upper())
+
+            discount_value = None
+            if discount == 'Si':
+                discount_value = st.number_input("Porcentaje del descuento", step = 1)
+
             if st.session_state['event_type'] == "philanthropic_event":
 
                 if st.button("Registrar usuario", use_container_width = True):
-                    ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason)
+
+                    ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason, 0)
 
                     if ans:
                         st.success("El usuario fue registrado exitosamente")
@@ -217,22 +234,19 @@ def buy_ticket(gui_controller_obj):
             else:
 
                 if st.button("Comprar boleta", use_container_width = True):
-                    ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason)
+
+                    if discount == 'Si':
+                        ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason, discount_value)
+                    else:
+                        ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason, 0)
+
+                    pdf_bytes = gui_controller_obj.create_pdf(select, first_name)
+                    st.download_button(label = "Descargar PDF", data = pdf_bytes, file_name = "boleta.pdf", mime = "application/pdf")
 
                     if ans:
                         st.success("La boleta fue creada exitosamente")
                     elif not ans:
                         st.warning("La boleta no fue creada exitosamente")
-
-            # Asignar valor de descuento
-            discount = st.radio("Aplicar descuento", ['Si', 'No'], index=0, format_func=lambda x: x.upper())
-
-            if discount == 'Si':
-                st.number_input("Porcentaje del descuento")
-
-            if st.button("Generar PDF"):
-                pdf_bytes = gui_controller_obj.create_pdf()
-                st.download_button(label = "Descargar PDF", data = pdf_bytes, file_name = "boleta.pdf", mime = "application/pdf")
 
         else:
             st.write("La capacidad del evento esta completa")
@@ -270,6 +284,7 @@ def theater_page(gui_controller_obj):
     input_info(gui_controller_obj)
 
 
+# Estructura evento filantropico
 def philanthropic_page(gui_controller_obj):
 
     st.markdown(PHILANTHROPIC_TITLE_STYLE, unsafe_allow_html = True)
@@ -281,6 +296,7 @@ def philanthropic_page(gui_controller_obj):
     input_info(gui_controller_obj)
 
 
+# Modifica los estados de los eventos y elimina
 def modify_page(gui_controller_obj):
 
     st.session_state['page'] = "modify"
@@ -350,3 +366,81 @@ def modify_page(gui_controller_obj):
     if st.button("Regresar", use_container_width = True):
         st.session_state['page'] = "show_view"
         st.rerun()
+
+
+# Registra la asistencia de los usuarios al evento
+def record_page(gui_controller_obj):
+
+    st.markdown(REGISTRATION_TITLE, unsafe_allow_html = True)
+    select_event = st.radio("Tipo de evento", ['Bar', 'Teatro', 'Filantropico'], index = 0, format_func = lambda x: x.upper())
+
+    # Imprime todas las opciones de evento que hay en el diccionario
+    dictionary = {}
+    if select_event == "Bar":
+        st.session_state['event_type'] = "bar_event"
+        dictionary = gui_controller_obj.get_dictionary("bar_record")
+    elif select_event == "Teatro":
+        st.session_state['event_type'] = "theater_event"
+        dictionary = gui_controller_obj.get_dictionary("theater_record")
+    elif select_event == "Filantropico":
+        st.session_state['event_type'] = "philanthropic_event"
+        dictionary = gui_controller_obj.get_dictionary("philanthropic_record")
+
+    if not dictionary:
+        st.write("No hay eventos disponibles")
+    else:
+        # Crear una lista con las claves del diccionario para mostrarlas
+        options = list(dictionary.keys())
+
+        select = st.selectbox('Selecciona una opción:', options)
+        username = st.text_input("Nombre del usuario")
+
+        if st.button("Marcar asistencia"):
+
+            # Funcion que modifica la asistencia del usuario
+            ans = gui_controller_obj.change_attendance(select, username)
+
+            if ans:
+                st.success("El usuario fue registrado")
+            else:
+                st.warning("El usuario no fue registrado")
+
+    if st.button("Regresar", use_container_width = True):
+        st.session_state['page'] = "show_view"
+        st.rerun()
+
+
+# Generación de reportes
+def report_page(gui_controller_obj):
+
+    select_event = st.radio("Tipo de evento", ['Bar', 'Teatro', 'Filantropico'], index=0, format_func=lambda x: x.upper())
+    dictionary = {}
+    if select_event == "Bar":
+        st.session_state['event_type'] = "bar_event"
+        dictionary = gui_controller_obj.get_dictionary("bar_record")
+    elif select_event == "Teatro":
+        st.session_state['event_type'] = "theater_event"
+        dictionary = gui_controller_obj.get_dictionary("theater_record")
+    elif select_event == "Filantropico":
+        st.session_state['event_type'] = "philanthropic_event"
+        dictionary = gui_controller_obj.get_dictionary("philanthropic_record")
+
+    if not dictionary:
+        st.write("No hay eventos disponibles")
+    else:
+        # Crear una lista con las claves del diccionario para mostrarlas
+        options = list(dictionary.keys())
+
+        event_name = st.selectbox('Selecciona una opción:', options)
+
+        if st.button("Reporte boletas", use_container_width = True):
+            st.write("Boletas de preventa: ", gui_controller_obj.get_pre_sale_ticket(event_name))
+            st.write("Boletas de venta regular: ", gui_controller_obj.get_regular_sales_tickets(event_name))
+            st.write("Boletas totales: ", gui_controller_obj.get_sold(event_name))
+
+    if st.button("Regresar", use_container_width = True):
+        st.session_state['page'] = "show_view"
+        st.rerun()
+
+    # Valores boletas
+    # Cambiar opción de tipo de venta

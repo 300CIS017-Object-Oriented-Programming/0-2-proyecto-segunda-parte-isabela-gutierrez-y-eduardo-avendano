@@ -1,7 +1,7 @@
 import streamlit as st
 from models.artist import Artist
 from models.user import User
-from view.view import main_screen, bar_page, theater_page, philanthropic_page, buy_ticket, modify_page
+from view.view import main_screen, bar_page, theater_page, philanthropic_page, buy_ticket, modify_page, record_page, report_page
 from models.bar import Bar
 from models.theater import Theater
 from models.philanthropic import Philanthropic
@@ -63,6 +63,12 @@ class GuiController(SystemController):
             elif st.session_state['page'] == "modify":
                 modify_page(gui_controller_obj)
 
+            elif st.session_state['page'] == "record":
+                record_page(gui_controller_obj)
+
+            elif st.session_state['page'] == "report":
+                report_page(gui_controller_obj)
+
     # Crea los artistas con su información que participan en cada evento y los almacena en un diccionario
     @staticmethod
     def create_artist(artist_name, artist_price, artist_time):
@@ -73,7 +79,7 @@ class GuiController(SystemController):
         return artist_obj
 
     @staticmethod
-    def create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, capacity):
+    def create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, capacity, sales_phase):
 
         # Crea un estado para almacenar los diccionarios de los eventos (solo en caso de que no este creado)
         if 'dictionary' not in st.session_state:
@@ -87,6 +93,7 @@ class GuiController(SystemController):
 
             # Crea el evento de la clase bar con toda la información
             bar_event_obj = Bar(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, capacity)
+            bar_event_obj.set_sales_phase(sales_phase)
 
             # Agregar un valor al diccionario
             SystemController.add_dictionary('bar_record', event_name, bar_event_obj)
@@ -100,7 +107,7 @@ class GuiController(SystemController):
         return ans
 
     @staticmethod
-    def create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theater_rental, capacity):
+    def create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theater_rental, capacity, sales_phase):
 
         if 'dictionary' not in st.session_state:
             st.session_state['dictionary'] = {'theater_record': {}}
@@ -112,6 +119,7 @@ class GuiController(SystemController):
 
             # Crea el evento de la clase bar con toda la información
             theater_event_obj = Theater(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theater_rental, capacity)
+            theater_event_obj.set_sales_phase(sales_phase)
 
             # Agregar un valor al diccionario
             SystemController.add_dictionary('theater_record', event_name, theater_event_obj)
@@ -159,11 +167,11 @@ class GuiController(SystemController):
 
     # Crea los objetos de los nuevos usuarios
     @staticmethod
-    def new_user(name, last_name, user_id, user_mail, event_name, reason):
+    def new_user(name, last_name, user_id, user_mail, event_name, reason, discount):
 
         try:
             # Llama al constructor de la clase para crear el objeto
-            user_obj = User(name, last_name, user_id, user_mail, reason)
+            user_obj = User(name, last_name, user_id, user_mail, reason, False)
 
             if st.session_state['event_type'] == 'bar_event':
 
@@ -172,11 +180,17 @@ class GuiController(SystemController):
 
                 # Llama a una función para añadir compradores a ese evento
                 bar_obj.set_users(name, user_obj)
+                sales_phase = bar_obj.get_sales_phase()
+
+                if sales_phase == 'Preventa':
+                    bar_obj.add_pre_sale_ticket()
+                else:
+                    bar_obj.add_regular_sales_ticket()
+
                 bar_obj.add_ticket()
 
                 # Obtiene valores para asginar la utilidad
-
-                ticket_price = bar_obj.get_ticket_price()
+                ticket_price = bar_obj.get_ticket_price() - (bar_obj.get_ticket_price() * (discount / 100))
 
                 # Asigna la utilidad del bar
                 total_bar = ticket_price * 0.2
@@ -197,6 +211,13 @@ class GuiController(SystemController):
 
                 # Llama a una función para añadir compradores a ese evento
                 theater_obj.set_users(name, user_obj)
+                sales_phase = theater_obj.get_sales_phase()
+
+                if sales_phase == 'Preventa':
+                    theater_obj.add_pre_sale_ticket()
+                else:
+                    theater_obj.add_regular_sales_ticket()
+
                 theater_obj.add_ticket()
 
                 # Obtiene valores para asginar la utilidad
@@ -330,11 +351,150 @@ class GuiController(SystemController):
 
     # Generar el PDF para imprimirlo
     @staticmethod
-    def create_pdf():
-        # Crear un archivo PDF
+    def create_pdf(event_name, username):
+
+        event_date, place, user_first_name, user_last_name, user_id, user_email = None, None, None, None, None, None
+
+        # Asignar toda la información que se va a imprimir
+        if st.session_state['event_type'] == 'bar_event':
+            obj = st.session_state['dictionary']['bar_record'][event_name]
+            place = obj.get_place()
+            users_dict = obj.get_users()
+
+            user_obj = None
+            if username in users_dict:
+                user_obj = users_dict[username]
+
+            user_first_name = user_obj.get_first_name()
+            user_last_name = user_obj.get_last_name()
+            user_id = user_obj.get_identification()
+            user_email = user_obj.get_email()
+
+        if st.session_state['event_type'] == 'theater_event':
+            obj = st.session_state['dictionary']['theater_record'][event_name]
+            place = obj.get_place()
+            users_dict = obj.get_users()
+
+            user_obj = None
+            if username in users_dict:
+                user_obj = users_dict[username]
+
+            user_first_name = user_obj.get_first_name()
+            user_last_name = user_obj.get_last_name()
+            user_id = user_obj.get_identification()
+            user_email = user_obj.get_email()
+
+        if st.session_state['event_type'] == 'philanthropic_event':
+
+            obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+            place = obj.get_place()
+            users_dict = obj.get_users()
+
+            user_obj = None
+            if username in users_dict:
+                user_obj = users_dict[username]
+
+            user_first_name = user_obj.get_first_name()
+            user_last_name = user_obj.get_last_name()
+            user_id = user_obj.get_identification()
+            user_email = user_obj.get_email()
+
+        # Almacena los datos en forma de bytes
         buffer = BytesIO()
+
+        # Se crea la hoja en blanco con una clase
         c = canvas.Canvas(buffer)
-        c.drawString(100, 750, "Hello, World!")
+
+        # Imprime información
+        c.drawString(100, 750, event_name)
+        c.drawString(100, 760, place)
+        c.drawString(100, 770, user_first_name)
+        c.drawString(100, 780, user_last_name)
+        c.drawString(100, 790, user_id)
+        c.drawString(100, 800, user_email)
+
+        # Guarda el contenido
         c.save()
+
+        # Retorna los bytes del PDF generado
         pdf_bytes = buffer.getvalue()
+
         return pdf_bytes
+
+    @staticmethod
+    def change_attendance(event_name, username):
+
+        ans = True
+        try:
+            if st.session_state['event_type'] == 'bar_event':
+                obj = st.session_state['dictionary']['bar_record'][event_name]
+                users_dict = obj.get_users()
+
+                user_obj = None
+                if username in users_dict:
+                    user_obj = users_dict[username]
+
+                user_obj.set_attendance(True)
+
+            if st.session_state['event_type'] == 'theater_event':
+                obj = st.session_state['dictionary']['theater_record'][event_name]
+                users_dict = obj.get_users()
+
+                user_obj = None
+                if username in users_dict:
+                    user_obj = users_dict[username]
+
+                user_obj.set_attendance(True)
+
+            if st.session_state['event_type'] == 'philanthropic_event':
+                obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+                users_dict = obj.get_users()
+
+                user_obj = None
+                if username in users_dict:
+                    user_obj = users_dict[username]
+
+                user_obj.set_attendance(True)
+
+        except ValueError:
+            ans = False
+
+        return ans
+
+    @staticmethod
+    def get_pre_sale_ticket(event_name):
+
+        ans = 0
+
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            ans = bar_obj.get_pre_sale_tickets()
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            ans = theater_obj.get_pre_sale_tickets()
+
+        if st.session_state['event_type'] == 'philanthropic_event':
+            phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+            ans = phil_obj.get_pre_sale_tickets()
+
+        return ans
+
+    @staticmethod
+    def get_regular_sales_tickets(event_name):
+
+        ans = 0
+
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            ans = bar_obj.get_regular_sales_tickets()
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            ans = theater_obj.get_regular_sales_tickets()
+
+        if st.session_state['event_type'] == 'philanthropic_event':
+            phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+            ans = phil_obj.get_regular_sales_tickets()
+
+        return ans

@@ -14,6 +14,9 @@ class Event:
         self.tickets_sold = 0
         self.users = {}
         self.capacity = capacity
+        self.sales_phase = ""
+        self.pre_sale_tickets = 0
+        self.regular_sales_tickets = 0
 
     # Set y Get para asignar y acceder a los atributos
     def get_event_name(self):
@@ -60,3 +63,24 @@ class Event:
 
     def get_capacity(self):
         return self.capacity
+
+    def get_users(self):
+        return self.users
+
+    def set_sales_phase(self, sales_phase):
+        self.sales_phase = sales_phase
+
+    def get_sales_phase(self):
+        return self.sales_phase
+
+    def add_pre_sale_ticket(self):
+        self.pre_sale_tickets += 1
+
+    def add_regular_sales_ticket(self):
+        self.regular_sales_tickets += 1
+
+    def get_regular_sales_tickets(self):
+        return self.regular_sales_tickets
+
+    def get_pre_sale_tickets(self):
+        return self.pre_sale_tickets

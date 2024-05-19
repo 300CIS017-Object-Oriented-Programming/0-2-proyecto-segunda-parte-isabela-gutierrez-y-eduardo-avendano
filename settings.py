@@ -96,3 +96,5 @@ PHILANTHROPIC_TITLE_STYLE = """
     </div> """
 
 TITLE_MODIFICATION = "<h1 style = 'font-family: Rockwell; text-align: center'> Modificar evento </h1> <br>"
+
+REGISTRATION_TITLE = "<h1 style = 'font-family: Rockwell; text-align: center'> Registro </h1> <br>"
