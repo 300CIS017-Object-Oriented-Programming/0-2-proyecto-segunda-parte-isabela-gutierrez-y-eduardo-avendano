@@ -1,13 +1,15 @@
 import streamlit as st
 from models.artist import Artist
 from models.user import User
-from view.view import main_screen, bar_page, theater_page, philanthropic_page, buy_ticket, modify_page, record_page, report_page
+from view.view import main_screen, bar_page, theater_page, philanthropic_page, buy_ticket, modify_page, record_page, report_page, report_by_artist, dashboard
 from models.bar import Bar
 from models.theater import Theater
 from models.philanthropic import Philanthropic
 from controllers.system_controller import SystemController
 from reportlab.pdfgen import canvas  # Libreria para generar el PDF
 from io import BytesIO
+import plotly.express as px  # Libreria para hacer las graficas
+import pandas as pd
 
 
 # Relacion entre las funciones de las clases y el view (la parte grafica)
@@ -69,6 +71,12 @@ class GuiController(SystemController):
             elif st.session_state['page'] == "report":
                 report_page(gui_controller_obj)
 
+            elif st.session_state['page'] == "report_by_artist":
+                report_by_artist(gui_controller_obj)
+
+            elif st.session_state['page'] == "dashboard":
+                dashboard(gui_controller_obj)
+
     # Crea los artistas con su información que participan en cada evento y los almacena en un diccionario
     @staticmethod
     def create_artist(artist_name, artist_price, artist_time):
@@ -79,7 +87,7 @@ class GuiController(SystemController):
         return artist_obj
 
     @staticmethod
-    def create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, capacity, sales_phase):
+    def create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price_pre_sale, ticket_regular, artist_info, capacity):
 
         # Crea un estado para almacenar los diccionarios de los eventos (solo en caso de que no este creado)
         if 'dictionary' not in st.session_state:
@@ -92,8 +100,7 @@ class GuiController(SystemController):
         try:
 
             # Crea el evento de la clase bar con toda la información
-            bar_event_obj = Bar(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, capacity)
-            bar_event_obj.set_sales_phase(sales_phase)
+            bar_event_obj = Bar(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price_pre_sale, ticket_regular, artist_info, capacity)
 
             # Agregar un valor al diccionario
             SystemController.add_dictionary('bar_record', event_name, bar_event_obj)
@@ -107,7 +114,7 @@ class GuiController(SystemController):
         return ans
 
     @staticmethod
-    def create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theater_rental, capacity, sales_phase):
+    def create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price_pre_sale, ticket_regular, artist_info, theater_rental, capacity):
 
         if 'dictionary' not in st.session_state:
             st.session_state['dictionary'] = {'theater_record': {}}
@@ -118,8 +125,7 @@ class GuiController(SystemController):
         try:
 
             # Crea el evento de la clase bar con toda la información
-            theater_event_obj = Theater(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price, artist_info, theater_rental, capacity)
-            theater_event_obj.set_sales_phase(sales_phase)
+            theater_event_obj = Theater(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price_pre_sale, ticket_regular, artist_info, theater_rental, capacity)
 
             # Agregar un valor al diccionario
             SystemController.add_dictionary('theater_record', event_name, theater_event_obj)
@@ -167,11 +173,11 @@ class GuiController(SystemController):
 
     # Crea los objetos de los nuevos usuarios
     @staticmethod
-    def new_user(name, last_name, user_id, user_mail, event_name, reason, discount):
+    def new_user(name, last_name, user_id, user_mail, event_name, reason, discount, sales_phase, pay, money):
 
         try:
             # Llama al constructor de la clase para crear el objeto
-            user_obj = User(name, last_name, user_id, user_mail, reason, False)
+            user_obj = User(name, last_name, user_id, user_mail, reason, False, pay, money, sales_phase)
 
             if st.session_state['event_type'] == 'bar_event':
 
@@ -180,17 +186,18 @@ class GuiController(SystemController):
 
                 # Llama a una función para añadir compradores a ese evento
                 bar_obj.set_users(name, user_obj)
-                sales_phase = bar_obj.get_sales_phase()
 
-                if sales_phase == 'Preventa':
-                    bar_obj.add_pre_sale_ticket()
-                else:
-                    bar_obj.add_regular_sales_ticket()
+                # Sumar el tipo de boleta vendida
+                bar_obj.add_ticket(sales_phase)
 
-                bar_obj.add_ticket()
+                # Asigna el dinero ingresado a su respectivo medio de pago
+                if pay == "Tarjeta":
+                    bar_obj.add_total_card(bar_obj.get_ticket_price(sales_phase), sales_phase)
+                elif pay == "Efectivo":
+                    bar_obj.add_total_cash(bar_obj.get_ticket_price(sales_phase), sales_phase)
 
                 # Obtiene valores para asginar la utilidad
-                ticket_price = bar_obj.get_ticket_price() - (bar_obj.get_ticket_price() * (discount / 100))
+                ticket_price = bar_obj.get_ticket_price(sales_phase) - (bar_obj.get_ticket_price(sales_phase) * (discount / 100))
 
                 # Asigna la utilidad del bar
                 total_bar = ticket_price * 0.2
@@ -211,17 +218,15 @@ class GuiController(SystemController):
 
                 # Llama a una función para añadir compradores a ese evento
                 theater_obj.set_users(name, user_obj)
-                sales_phase = theater_obj.get_sales_phase()
+                theater_obj.add_ticket(sales_phase)
 
-                if sales_phase == 'Preventa':
-                    theater_obj.add_pre_sale_ticket()
-                else:
-                    theater_obj.add_regular_sales_ticket()
+                # Asigna el dinero ingresado a su respectivo medio de pago
+                if pay == "Tarjeta":
+                    theater_obj.add_total_card(theater_obj.get_ticket_price(sales_phase), sales_phase)
+                elif pay == "Efectivo":
+                    theater_obj.add_total_cash(theater_obj.get_ticket_price(sales_phase), sales_phase)
 
-                theater_obj.add_ticket()
-
-                # Obtiene valores para asginar la utilidad
-                ticket_price = theater_obj.get_ticket_price()
+                ticket_price = theater_obj.get_ticket_price(sales_phase) - (theater_obj.get_ticket_price(sales_phase) * (discount / 100))
 
                 # Asigna la utilidad del bar
                 total_theater = ticket_price * 0.07
@@ -312,9 +317,7 @@ class GuiController(SystemController):
         try:
             # Ingresar al diccionario donde estan los eventos para eliminarlo
             if st.session_state['event_type'] == 'bar_event':
-
                 st.write(st.session_state['dictionary']['bar_record'][event_name])
-
                 st.session_state['dictionary']['bar_record'].pop(event_name)
 
             if st.session_state['event_type'] == 'theater_event':
@@ -498,3 +501,219 @@ class GuiController(SystemController):
             ans = phil_obj.get_regular_sales_tickets()
 
         return ans
+
+    @staticmethod
+    def get_ticket_price(event_name, sales_phase):
+
+        ans = 0
+        if sales_phase == "Preventa":
+            if st.session_state['event_type'] == 'bar_event':
+                bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+                ans = bar_obj.get_ticket_price("Preventa")
+
+            if st.session_state['event_type'] == 'theater_event':
+                theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+                ans = theater_obj.get_ticket_price("Preventa")
+
+            if st.session_state['event_type'] == 'philanthropic_event':
+                phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+                ans = phil_obj.get_ticket_price("Preventa")
+
+        else:
+            if st.session_state['event_type'] == 'bar_event':
+                bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+                ans = bar_obj.get_ticket_price("Venta regular")
+
+            if st.session_state['event_type'] == 'theater_event':
+                theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+                ans = theater_obj.get_ticket_price("Venta regular")
+
+            if st.session_state['event_type'] == 'philanthropic_event':
+                phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+                ans = phil_obj.get_ticket_price("Venta regular")
+
+        return ans
+
+    @staticmethod
+    def get_cash(event_name, sales_phase):
+
+        ans = 0
+
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            ans = bar_obj.get_total_cash(sales_phase)
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            ans = theater_obj.get_total_cash(sales_phase)
+
+        return ans
+
+    @staticmethod
+    def get_card(event_name, sales_phase):
+
+        ans = 0
+
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            ans = bar_obj.get_total_card(sales_phase)
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            ans = theater_obj.get_total_card(sales_phase)
+
+        return ans
+
+    @staticmethod
+    def get_dict_users(event_name):
+
+        ans = {}
+
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            ans = bar_obj.get_users()
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            ans = theater_obj.get_users()
+
+        if st.session_state['event_type'] == 'philanthropic_event':
+            phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+            ans = phil_obj.get_users()
+
+        return ans
+
+    @staticmethod
+    def get_dict_artist(event_name):
+
+        ans = {}
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            ans = bar_obj.get_artist_info()
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            ans = theater_obj.get_artist_info()
+
+        if st.session_state['event_type'] == 'philanthropic_event':
+            phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+            ans = phil_obj.get_artist_info()
+
+        return ans
+
+    @staticmethod
+    def graphics(event_name):
+
+        users = {}
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            users = bar_obj.get_users()
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            users = theater_obj.get_users()
+
+        if st.session_state['event_type'] == 'philanthropic_event':
+            phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+            users = phil_obj.get_users()
+
+        # Reune el número de boletas por cada tipo y los metodos de pago
+        num_pre_sale, num_regular, num_card, num_cash = 0, 0, 0, 0
+        for value in users.values():
+
+            if value.get_sale_phase() == 'Preventa':
+                num_pre_sale += 1
+            elif value.get_sale_phase() == 'Venta regular':
+                num_regular += 1
+
+            if value.get_pay() == 'Efectivo':
+                num_cash += 1
+            elif value.get_pay() == 'Tarjeta':
+                num_card += 1
+
+        data_sale = {
+            'Tipo de boleta': ['Preventa', 'Venta regular'],
+            'Boletas vendidas': [num_pre_sale, num_regular]
+        }
+
+        data_pay = {
+            'Metodo de pago': ['Efectivo', 'Tarjeta'],
+            'Tipo de compra': [num_cash, num_card]
+        }
+
+        # Crea los datos
+        dfs = pd.DataFrame(data_sale)
+        dfp = pd.DataFrame(data_pay)
+
+        # Crea un gráfico de barras con Plotly
+        fig_sale = px.bar(dfs, x = 'Tipo de boleta', y = 'Boletas vendidas', title = 'Compra de boletas')
+        fig_pay = px.bar(dfp, x = 'Metodo de pago', y = 'Tipo de compra', title = 'Medios de pago')
+
+        return fig_sale, fig_pay, dfs, dfp
+
+    # Convierte en un tipo de Excel para descargar
+    @staticmethod
+    def to_excel(df):
+
+        with BytesIO() as output:
+            with pd.ExcelWriter(output, engine = 'xlsxwriter') as writer:
+                df.to_excel(writer, index = False, sheet_name = 'Sheet1')
+            processed_data = output.getvalue()
+
+        return processed_data
+
+    @staticmethod
+    def find_event(art_name):
+
+        dictionary = st.session_state['dictionary']
+
+        # Recorre el diccionario hasta que coincida con el artista
+        for key, value in dictionary.items():
+            for key_2, value_2 in value.items():
+                art_dict = value_2.get_artist_info()
+                for key_3 in art_dict.keys():
+                    if key_3 == art_name:
+                        return key_2, key
+
+    @staticmethod
+    def get_info(event_name):
+
+        date, place, capacity = "", "", ""
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            date = bar_obj.get_event_date()
+            place = bar_obj.get_place()
+            capacity = bar_obj.get_capacity()
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            date = theater_obj.get_event_date()
+            place = theater_obj.get_place()
+            capacity = theater_obj.get_capacity()
+
+        if st.session_state['event_type'] == 'philanthropic_event':
+            phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
+            date = phil_obj.get_event_date()
+            place = phil_obj.get_place()
+            capacity = phil_obj.get_capacity()
+
+        return date, place, capacity
+
+    @staticmethod
+    def update_count():
+
+        count_dict = {}
+        diccionarios = st.session_state['dictionary']
+
+        # Recorremos cada diccionario en el diccionario principal
+        for d in diccionarios.values():
+            for key, obj in d.items():
+                event_date = obj.get_event_date()
+                if event_date in count_dict:
+                    count_dict[event_date] += 1
+                else:
+                    count_dict[event_date] = 1
+
+        # Convertimos el diccionario auxiliar en una lista de tuplas
+        result = [(event_date, count) for event_date, count in count_dict.items()]
+        return result

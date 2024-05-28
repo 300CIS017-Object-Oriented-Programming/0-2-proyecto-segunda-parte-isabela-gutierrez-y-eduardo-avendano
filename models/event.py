@@ -14,7 +14,6 @@ class Event:
         self.tickets_sold = 0
         self.users = {}
         self.capacity = capacity
-        self.sales_phase = ""
         self.pre_sale_tickets = 0
         self.regular_sales_tickets = 0
 
@@ -49,7 +48,13 @@ class Event:
     def set_users(self, user_name, user_obj):
         self.users[user_name] = user_obj
 
-    def add_ticket(self):
+    def add_ticket(self, sales_phase):
+
+        if sales_phase == "Preventa":
+            self.pre_sale_tickets += 1
+        elif sales_phase == "Venta regular":
+            self.regular_sales_tickets += 1
+
         self.tickets_sold += 1
 
     def get_status(self):
@@ -66,12 +71,6 @@ class Event:
 
     def get_users(self):
         return self.users
-
-    def set_sales_phase(self, sales_phase):
-        self.sales_phase = sales_phase
-
-    def get_sales_phase(self):
-        return self.sales_phase
 
     def add_pre_sale_ticket(self):
         self.pre_sale_tickets += 1
