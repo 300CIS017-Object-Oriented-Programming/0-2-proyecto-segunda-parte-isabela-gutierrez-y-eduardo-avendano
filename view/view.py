@@ -577,18 +577,19 @@ def report_page(gui_controller_obj):
 
 
 def report_by_artist(gui_controller_obj):
-
     st.title("Buscar evento por artista")
     art_name = st.text_input("Nombre del artista")
 
-    if st.button("Buscar", use_container_width = True):
-
+    if st.button("Buscar", use_container_width=True):
         event_name, event_type = gui_controller_obj.find_event(art_name)
         event_date, place, capacity = gui_controller_obj.get_info(event_name)
 
         ticket = gui_controller_obj.get_sold(event_name)
 
-        percentage = (ticket / capacity) * 100
+        if capacity == 0:
+            percentage = 0
+        else:
+            percentage = (ticket / capacity) * 100
 
         st.session_state['event_type'] = event_type
         st.write("Nombre del evento: ", event_name)
