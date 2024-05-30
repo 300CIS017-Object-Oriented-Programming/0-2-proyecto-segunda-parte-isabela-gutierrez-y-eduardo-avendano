@@ -15,8 +15,10 @@ class Artist:
     def get_money(self):
         return self.money
 
+    # Asignar ganancia al artista
     def set_utility(self, utility):
         self.artist_utility = utility
 
+    # Retorna la ganancia del artista
     def get_artist_utility(self):
         return self.artist_utility

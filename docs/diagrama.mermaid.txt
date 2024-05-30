@@ -1,0 +1,175 @@
+classDiagram
+    SystemController <|-- GuiController
+    GuiController <|-- main
+    GuiController <|-- view
+    GuiController -- Artist: Asociación
+    GuiController -- Event: Asociación
+    GuiController -- User: Asociación
+    Event <|-- Bar
+    Event <|-- Theater
+    Event <|-- Philanthropic 
+    Bar -- Ticket: Asociación
+    Theater -- Ticket: Asociación
+
+
+    class SystemController {
+        -__initialized: bool
+        +set_dictionary(...): void
+        +get_diccionario(...): dictionary
+        +add_dictionary(...): void
+        +size_diccionarios(): int
+    }
+
+    class GuiController {
+        -__initialized: bool
+        +call_functions(): void
+        +create_artist(...): Artist
+        +create_bar_event(...): bool
+        +create_theater_event(...): bool
+        +create_philanthropic_event(...): bool
+        +get_diccionario(...): dictionary
+        +new_user(...):bool
+        +get_status(...): string
+        +set_status(...): bool
+        +get_sold(...): int
+        +delete_event(...): bool
+        +get_capacity(...): int
+        +create_pdf(...)
+        +change_attendance(...): bool
+        +get_pre_sale_ticket(...): int
+        +get_regular_sales_tickets(...): int
+        +get_ticket_price(...): int
+        +get_cash(...): int
+        +get_card(...): int
+        +get_dict_users(...): dictionary
+        +get_dict_artist(...) dictionary
+        +graphics(...)
+        +to_excel(...)
+        +find_event(...): event
+        +get_info(...): string
+        +update_count(...): list
+        +get_total_phase(...): int
+    }
+
+    class Artist {
+        -name: str
+        -money: float
+        -time: int
+        -artist_utility: int
+        +_init_(...)
+        +get_name(...): str
+        +get_money(...): float
+        +set_utility(...)
+        +get_artist_utility(...): int
+    }
+
+    class Event {
+        - event_name: str
+        - event_date: str
+        - opening: str
+        - show_time: str
+        - place: str
+        - address: str
+        - city: str
+        - event_status: str
+        - artist_info: str
+        - users: dict
+        - capacity: int
+        - tickets_sold: int
+        - pre_sale_tickets: int
+        - regular_sales_tickets: int
+        + __init__(...) : None
+        + get_event_name() : str
+        + get_event_date() : str
+        + get_opening() : str
+        + get_show_time() : str
+        + get_place() : str
+        + get_address() : str
+        + get_city() : str
+        + get_event_status() : str
+        + get_artist_info() : str
+        + set_users(...) : None
+        + add_ticket(...) : None
+        + get_status() : str
+        + set_status(...) : None
+        + get_tickets_sold() : int
+        + get_capacity() : int
+        + get_users() : dict
+        + add_pre_sale_ticket() : None
+        + add_regular_sales_ticket() : None
+        + get_regular_sales_tickets() : int
+        + get_pre_sale_tickets() : int
+    }
+
+    class Bar {
+        -utility: int
+        - ticket_info: Ticket
+        +__init__(...)                  
+        +get_ticket_price(...): int          
+        +set_utility(...)               
+        +add_total_cash(...)            
+        +add_total_card(...)            
+        +get_total_card(...): int          
+        +get_total_cash(...): int          
+        +set_total_money(...)           
+        +get_total_money(...): int         
+        +set_total_sale_phase(...)   
+        +get_total_sale_phase(...): int
+    }
+
+    class Theater {
+        - theater_rental: int
+        - utility: int
+        - ticket_info: TicketInformation
+        + __init__(...) : None
+        + get_ticket_price(...) : int
+        + set_utility(...) : None
+        + add_total_cash(...) : None
+        + add_total_card(...) : None
+        + get_total_card(...) : int
+        + get_total_cash(...) : int
+        + set_total_money(...) : None
+        + get_total_money() : int
+        + set_total_sale_phase(...) : None
+        + get_total_sale_phase(...) : int
+    }
+
+    class Ticket {
+        - ticket_price_pre_sale: int
+        - ticket_price_regular: int
+        - total_pre_sale: int
+        - total_regular: int
+        - total_cash_pre: int
+        - total_cash_regular: int
+        - total_card_pre: int
+        - total_card_regular: int
+        - total_money: int
+        + __init__(...) : None
+        + get_ticket_price_pre_sale() : int
+        + get_ticket_price_regular() : int
+    }
+
+    class User {
+        - first_name: str
+        - last_name: str
+        - identification: str
+        - email: str
+        - reason: str
+        - attendance: bool
+        - user_ticket_price: int
+        - payment_method: str
+        - sale_phase: str
+        + __init__(...) : None
+        + get_first_name() : str
+        + get_last_name() : str
+        + get_identification() : str
+        + get_email() : str
+        + set_attendance(...) : None
+        + get_sale_phase() : str
+        + get_payment_method() : str
+        + get_ticket_price() : int
+    }
+    
+    class Philanthropic {
+        -sponsors: dictionary
+    }

@@ -11,6 +11,7 @@ class Bar(Event):
         self.utility = 0
         self.ticket_info = ticket_info
 
+    # Gets / Sets de la informacion de la clase
     def get_ticket_price(self, sales_phase):
 
         ans = 0

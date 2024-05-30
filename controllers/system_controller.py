@@ -32,6 +32,7 @@ class SystemController:
     def add_dictionary(dict_name, key, value):
         st.session_state['dictionary'][dict_name][key] = value
 
+    # Retorna el tamaño del diccionario
     @staticmethod
     def size_diccionarios():
         diccionario = SystemController.get_diccionario('bar_record')

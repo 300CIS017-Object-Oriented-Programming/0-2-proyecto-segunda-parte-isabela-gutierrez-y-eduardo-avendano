@@ -89,6 +89,7 @@ class GuiController(SystemController):
         # Retorna el objeto creado para el artista
         return artist_obj
 
+    # Crea los eventos de tipo bar con su respectiva información
     @staticmethod
     def create_bar_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price_pre_sale, ticket_regular, artist_info, capacity):
 
@@ -119,6 +120,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Crea los eventos del teatro con su informacion
     @staticmethod
     def create_theater_event(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price_pre_sale, ticket_regular, artist_info, theater_rental, capacity):
 
@@ -147,6 +149,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Crea los eventos de tipo filantropico
     @staticmethod
     def create_philanthropic_event(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, sponsors, capacity):
 
@@ -172,6 +175,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Obtiene el diccionario de un evento para saber su informacion
     @staticmethod
     def get_dictionary(dict_name):
 
@@ -329,6 +333,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Elimina los eventos que no tienen boleteria vendida
     @staticmethod
     def delete_event(event_name):
 
@@ -482,6 +487,7 @@ class GuiController(SystemController):
 
         return pdf_bytes
 
+    # Realiza el registro de asistencia de las personas que compran boletas
     @staticmethod
     def change_attendance(event_name, username):
 
@@ -522,6 +528,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Retorna el numero de boletas de preventa vendidas
     @staticmethod
     def get_pre_sale_ticket(event_name):
 
@@ -541,6 +548,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Retorna el numero de boletas de venta regular vendidas
     @staticmethod
     def get_regular_sales_tickets(event_name):
 
@@ -560,6 +568,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Retorna los precios de ambos tipos de boletas
     @staticmethod
     def get_ticket_price(event_name, sales_phase):
 
@@ -592,6 +601,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Retorna las ganancias del medio de pago en efectivo
     @staticmethod
     def get_cash(event_name, sales_phase):
 
@@ -607,6 +617,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Retorna las ganancias del medio de pago con tarjeta
     @staticmethod
     def get_card(event_name, sales_phase):
 
@@ -622,6 +633,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Retorna el diccionario con compradores de un respectivo evento
     @staticmethod
     def get_dict_users(event_name):
 
@@ -641,6 +653,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Retorna el diccionario con los artistas de un evento especifico
     @staticmethod
     def get_dict_artist(event_name):
 
@@ -659,6 +672,7 @@ class GuiController(SystemController):
 
         return ans
 
+    # Realiza las tablas y graficas con la informacion
     @staticmethod
     def graphics(event_name):
 
@@ -720,6 +734,7 @@ class GuiController(SystemController):
 
         return processed_data
 
+    # Busca un evento por el nombre del artista
     @staticmethod
     def find_event(art_name):
 
@@ -733,6 +748,7 @@ class GuiController(SystemController):
                     if key_3 == art_name:
                         return key_2, key
 
+    # Retorna toda la informacion para hacer el reporte
     @staticmethod
     def get_info(event_name):
 
@@ -757,6 +773,7 @@ class GuiController(SystemController):
 
         return date, place, capacity
 
+    # Evalua la cantidad de veces que se repite un evento en unas fechas
     @staticmethod
     def update_count():
 
@@ -790,6 +807,7 @@ class GuiController(SystemController):
         result = [(event_date, data['count'], data['event_type'], data['event_names'], data['total_moneys']) for event_date, data in count_dict.items()]
         return result
 
+    # Dinero total recaudado en un tipo de boleteria
     @staticmethod
     def get_total_phase(sale_phase, event_name):
 

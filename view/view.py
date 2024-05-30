@@ -316,7 +316,7 @@ def theater_page(gui_controller_obj):
     input_info(gui_controller_obj)
 
 
-# Estructura evento filantropico
+# Estructura de la pagina filantropico
 def philanthropic_page(gui_controller_obj):
 
     st.markdown(PHILANTHROPIC_TITLE_STYLE, unsafe_allow_html = True)
@@ -570,6 +570,7 @@ def report_page(gui_controller_obj):
         st.rerun()
 
 
+# Permite buscar un evento por medio del artista
 def report_by_artist(gui_controller_obj):
     st.title("Buscar evento por artista")
     art_name = st.text_input("Nombre del artista")
@@ -605,6 +606,7 @@ def report_by_artist(gui_controller_obj):
         st.rerun()
 
 
+# Crea la tabla de registros con sus graficas
 def dashboard(gui_controller_obj):
     st.title("Dashboard de Gestión de Eventos")
 
@@ -663,6 +665,7 @@ def dashboard(gui_controller_obj):
         st.rerun()
 
 
+# Registra asistencia para hacer la tabla de registros
 def register_attendance(gui_controller_obj):
 
     st.title("Gestión de Ingreso al Evento")
