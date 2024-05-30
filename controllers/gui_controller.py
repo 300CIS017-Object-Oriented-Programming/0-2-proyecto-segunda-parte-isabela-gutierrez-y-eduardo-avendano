@@ -7,10 +7,16 @@ from models.theater import Theater
 from models.ticket import Ticket
 from models.philanthropic import Philanthropic
 from controllers.system_controller import SystemController
-from reportlab.pdfgen import canvas  # Libreria para generar el PDF
-from io import BytesIO
 import plotly.express as px  # Libreria para hacer las graficas
 import pandas as pd
+
+# Librerias para el manejo del PDF
+from io import BytesIO
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.lib.units import inch
+from reportlab.pdfgen import canvas
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Spacer
 
 
 # Relacion entre las funciones de las clases y el view (la parte grafica)
@@ -362,7 +368,7 @@ class GuiController(SystemController):
     @staticmethod
     def create_pdf(event_name, username):
 
-        event_date, place, user_first_name, user_last_name, user_id, user_email = None, None, None, None, None, None
+        event_date, place, user_first_name, user_last_name, user_id, user_email, user_ticket, user_payment = None, None, None, None, None, None, None, None
 
         # Asignar toda la información que se va a imprimir
         if st.session_state['event_type'] == 'bar_event':
@@ -378,6 +384,8 @@ class GuiController(SystemController):
             user_last_name = user_obj.get_last_name()
             user_id = user_obj.get_identification()
             user_email = user_obj.get_email()
+            user_ticket = user_obj.get_ticket_price()
+            user_payment = user_obj.get_payment_method
 
         if st.session_state['event_type'] == 'theater_event':
             obj = st.session_state['dictionary']['theater_record'][event_name]
@@ -392,9 +400,10 @@ class GuiController(SystemController):
             user_last_name = user_obj.get_last_name()
             user_id = user_obj.get_identification()
             user_email = user_obj.get_email()
+            user_ticket = user_obj.get_ticket_price()
+            user_payment = user_obj.get_payment_method
 
         if st.session_state['event_type'] == 'philanthropic_event':
-
             obj = st.session_state['dictionary']['philanthropic_record'][event_name]
             place = obj.get_place()
             users_dict = obj.get_users()
@@ -407,6 +416,8 @@ class GuiController(SystemController):
             user_last_name = user_obj.get_last_name()
             user_id = user_obj.get_identification()
             user_email = user_obj.get_email()
+            user_ticket = user_obj.get_ticket_price()
+            user_payment = user_obj.get_payment_method
 
         # Almacena los datos en forma de bytes
         buffer = BytesIO()
@@ -414,13 +425,47 @@ class GuiController(SystemController):
         # Se crea la hoja en blanco con una clase
         c = canvas.Canvas(buffer)
 
-        # Imprime información
-        c.drawString(100, 750, event_name)
-        c.drawString(100, 760, place)
-        c.drawString(100, 770, user_first_name)
-        c.drawString(100, 780, user_last_name)
-        c.drawString(100, 790, user_id)
-        c.drawString(100, 800, user_email)
+        # Agrega título y separador
+        c.setFont("Helvetica-Bold", 20)
+        c.drawString(100, 800, "Boleto de Entrada")
+        c.line(100, 790, 500, 790)
+
+        # Imprime información del evento
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(100, 760, "Evento:")
+        c.setFont("Helvetica", 14)
+        c.drawString(200, 760, event_name)
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(100, 740, "Lugar:")
+        c.setFont("Helvetica", 14)
+        c.drawString(200, 740, place)
+
+        # Imprime información del usuario
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(100, 720, "Nombre:")
+        c.setFont("Helvetica", 14)
+        c.drawString(200, 720, f"{user_first_name} {user_last_name}")
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(100, 700, "ID:")
+        c.setFont("Helvetica", 14)
+        c.drawString(200, 700, user_id)
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(100, 680, "Email:")
+        c.setFont("Helvetica", 14)
+        c.drawString(200, 680, user_email)
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(100, 680, "Email:")
+        c.setFont("Helvetica", 14)
+        c.drawString(200, 680, user_ticket)
+
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(100, 680, "Email:")
+        c.setFont("Helvetica", 14)
+        c.drawString(200, 680, user_payment)
 
         # Guarda el contenido
         c.save()

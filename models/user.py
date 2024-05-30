@@ -31,3 +31,6 @@ class User:
 
     def get_payment_method(self):
         return self.payment_method
+
+    def get_ticket_price(self):
+        return self.user_ticket_price

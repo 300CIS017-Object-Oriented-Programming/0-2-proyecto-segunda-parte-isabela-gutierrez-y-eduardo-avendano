@@ -119,7 +119,7 @@ def input_info(gui_controller_obj):
             # Para no generar las mismas claves en las entradas se hace un conteo de artistas
             artist_name = st.text_input(f"Nombre del artista {artist_counter + 1}")
             artist_price = st.number_input(f"Valor del contrato del artista {artist_counter + 1}", step = 1)
-            artist_time = st.text_input(f"Hora de presentación del artista {artist_counter + 1}")
+            artist_time = st.time_input(f"Hora de presentación del artista {artist_counter + 1}")
 
             # Crear objeto del artista
             artist_obj_info = gui_controller_obj.create_artist(artist_name, artist_price, artist_time)
