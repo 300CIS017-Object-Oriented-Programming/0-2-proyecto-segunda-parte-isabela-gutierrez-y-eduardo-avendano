@@ -72,7 +72,10 @@ class Theater(Event):
 
     def get_total_sale_phase(self, sales_phase):
 
+        ans = 0
         if sales_phase == "Preventa":
-            self.ticket_info.get_total_pre_sale()
+            ans = self.ticket_info.get_total_pre_sale()
         elif sales_phase == "Venta regular":
-            self.ticket_info.get_total_regular()
+            ans = self.ticket_info.get_total_regular()
+
+        return ans
