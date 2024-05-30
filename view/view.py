@@ -238,6 +238,9 @@ def buy_ticket(gui_controller_obj):
 
                         ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason, "N/A", "N/A", 0)
 
+                        pdf_bytes = gui_controller_obj.create_pdf(select, first_name)
+                        st.download_button(label="Descargar PDF", data=pdf_bytes, file_name="boleta.pdf", mime="application/pdf")
+
                         if ans:
                             st.success("El usuario fue registrado exitosamente")
                         elif not ans:

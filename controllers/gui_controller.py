@@ -786,7 +786,11 @@ class GuiController(SystemController):
 
                 event_date = obj.get_event_date()
                 event_name = obj.get_event_name()
-                total_money = obj.get_total_money()
+
+                if st.session_state['event_type'] != 'philanthropic_event':
+                    total_money = obj.get_total_money()
+                else:
+                    total_money = 0
 
                 event_type = " "
                 if st.session_state['event_type'] == 'bar_event':
