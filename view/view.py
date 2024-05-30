@@ -645,11 +645,11 @@ def dashboard(gui_controller_obj):
 
         # Gráfico de cantidad de eventos por tipo
         event_type_count = filtered_df['Event_Type'].value_counts()
-        fig1, ax1 = plt.subplots(figsize=(8, 4))
+        fig1, ax1 = plt.subplots(figsize = (8, 4))
         ax1.bar(event_type_count.index, event_type_count.values)
-        ax1.set_xlabel('Tipo de Evento', fontsize=10)
-        ax1.set_ylabel('Cantidad de Eventos', fontsize=10)
-        ax1.set_title('Cantidad de Eventos por Tipo', fontsize=12)
+        ax1.set_xlabel('Tipo de Evento', fontsize = 10)
+        ax1.set_ylabel('Cantidad de Eventos', fontsize = 10)
+        ax1.set_title('Cantidad de Eventos por Tipo', fontsize = 12)
         st.pyplot(fig1)
 
         # Mostrar la gráfica de eventos por fecha
@@ -670,21 +670,23 @@ def dashboard(gui_controller_obj):
         st.session_state['page'] = "show_view"
         st.rerun()
 
+
 def register_attendance(gui_controller_obj):
+
     st.title("Gestión de Ingreso al Evento")
 
     # Supongamos que get_ticket_data devuelve una lista de tuplas con (ticket_id, buyer_name, event_name)
     ticket_data = gui_controller_obj.get_ticket_data()
-    ticket_df = pd.DataFrame(ticket_data, columns=['ticket_id', 'buyer_name', 'event_name'])
+    ticket_df = pd.DataFrame(ticket_data, columns = ['ticket id', 'buyer name', 'event name'])
 
     # Búsqueda de boletas vendidas o comprador
     search_term = st.text_input("Buscar por nombre del comprador o ID de la boleta")
 
     if st.button("Buscar"):
         if search_term.isdigit():
-            result_df = ticket_df[ticket_df['ticket_id'] == int(search_term)]
+            result_df = ticket_df[ticket_df['ticket id'] == int(search_term)]
         else:
-            result_df = ticket_df[ticket_df['buyer_name'].str.contains(search_term, case=False)]
+            result_df = ticket_df[ticket_df['buyer name'].str.contains(search_term, case = False)]
 
         if result_df.empty:
             st.write("No se encontraron resultados.")
@@ -694,5 +696,5 @@ def register_attendance(gui_controller_obj):
 
             if st.button("Registrar Asistencia"):
                 # Lógica para registrar la asistencia (esto puede implicar actualizar una base de datos)
-                gui_controller_obj.register_attendance(result_df['ticket_id'].values[0])
+                gui_controller_obj.register_attendance(result_df['ticket id'].values[0])
                 st.write("Asistencia registrada para la boleta/comprador seleccionado.")

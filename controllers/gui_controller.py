@@ -384,8 +384,8 @@ class GuiController(SystemController):
             user_last_name = user_obj.get_last_name()
             user_id = user_obj.get_identification()
             user_email = user_obj.get_email()
-            user_ticket = user_obj.get_ticket_price()
-            user_payment = user_obj.get_payment_method
+            user_ticket = str(user_obj.get_ticket_price())
+            user_payment = str(user_obj.get_payment_method())
 
         if st.session_state['event_type'] == 'theater_event':
             obj = st.session_state['dictionary']['theater_record'][event_name]
@@ -400,8 +400,8 @@ class GuiController(SystemController):
             user_last_name = user_obj.get_last_name()
             user_id = user_obj.get_identification()
             user_email = user_obj.get_email()
-            user_ticket = user_obj.get_ticket_price()
-            user_payment = user_obj.get_payment_method
+            user_ticket = str(user_obj.get_ticket_price())
+            user_payment = str(user_obj.get_payment_method())
 
         if st.session_state['event_type'] == 'philanthropic_event':
             obj = st.session_state['dictionary']['philanthropic_record'][event_name]
@@ -416,8 +416,8 @@ class GuiController(SystemController):
             user_last_name = user_obj.get_last_name()
             user_id = user_obj.get_identification()
             user_email = user_obj.get_email()
-            user_ticket = user_obj.get_ticket_price()
-            user_payment = user_obj.get_payment_method
+            user_ticket = str(user_obj.get_ticket_price())
+            user_payment = str(user_obj.get_payment_method())
 
         # Almacena los datos en forma de bytes
         buffer = BytesIO()
@@ -457,15 +457,16 @@ class GuiController(SystemController):
         c.setFont("Helvetica", 14)
         c.drawString(200, 680, user_email)
 
+        # Imprime información adicional
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(100, 680, "Email:")
+        c.drawString(100, 660, "Precio del Boleto:")
         c.setFont("Helvetica", 14)
-        c.drawString(200, 680, user_ticket)
+        c.drawString(260, 660, user_ticket)
 
         c.setFont("Helvetica-Bold", 14)
-        c.drawString(100, 680, "Email:")
+        c.drawString(100, 640, "Método de Pago:")
         c.setFont("Helvetica", 14)
-        c.drawString(200, 680, user_payment)
+        c.drawString(260, 640, user_payment)
 
         # Guarda el contenido
         c.save()
@@ -759,7 +760,15 @@ class GuiController(SystemController):
         for d in diccionarios.values():
             for key, obj in d.items():
                 event_date = obj.get_event_date()
-                event_type = obj.get_event_type()
+
+                event_type = " "
+                if st.session_state['event_type'] == 'bar_event':
+                    event_type = "Bar"
+                elif st.session_state['event_type'] == 'theater_event':
+                    event_type = "Theater"
+                elif st.session_state['event_type'] == 'philanthropic_event':
+                    event_type = "Philanthropic"
+
                 if event_date in count_dict:
                     count_dict[event_date]['count'] += 1
                 else:
