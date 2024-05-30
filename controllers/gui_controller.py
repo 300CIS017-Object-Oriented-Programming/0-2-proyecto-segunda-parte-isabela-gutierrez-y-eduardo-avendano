@@ -4,6 +4,7 @@ from models.user import User
 from view.view import main_screen, bar_page, theater_page, philanthropic_page, buy_ticket, modify_page, record_page, report_page, report_by_artist, dashboard
 from models.bar import Bar
 from models.theater import Theater
+from models.ticket import Ticket
 from models.philanthropic import Philanthropic
 from controllers.system_controller import SystemController
 from reportlab.pdfgen import canvas  # Libreria para generar el PDF
@@ -99,8 +100,11 @@ class GuiController(SystemController):
 
         try:
 
+            # Crear un objeto con toda la informacion de la tiqueteria
+            ticket_obj = Ticket(ticket_price_pre_sale, ticket_regular)
+
             # Crea el evento de la clase bar con toda la información
-            bar_event_obj = Bar(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price_pre_sale, ticket_regular, artist_info, capacity)
+            bar_event_obj = Bar(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, capacity, ticket_obj)
 
             # Agregar un valor al diccionario
             SystemController.add_dictionary('bar_record', event_name, bar_event_obj)
@@ -124,8 +128,11 @@ class GuiController(SystemController):
 
         try:
 
+            # Crear la información de la tiquetera
+            ticket_obj = Ticket(ticket_price_pre_sale, ticket_regular)
+
             # Crea el evento de la clase bar con toda la información
-            theater_event_obj = Theater(event_name, event_date, opening, show_time, place, address, city, event_status, ticket_price_pre_sale, ticket_regular, artist_info, theater_rental, capacity)
+            theater_event_obj = Theater(event_name, event_date, opening, show_time, place, address, city, event_status, artist_info, theater_rental, capacity, ticket_obj)
 
             # Agregar un valor al diccionario
             SystemController.add_dictionary('theater_record', event_name, theater_event_obj)
@@ -173,11 +180,11 @@ class GuiController(SystemController):
 
     # Crea los objetos de los nuevos usuarios
     @staticmethod
-    def new_user(name, last_name, user_id, user_mail, event_name, reason, discount, sales_phase, pay, money):
+    def new_user(name, last_name, user_id, user_mail, event_name, reason, sales_phase, payment_method, ticket_price):
 
         try:
             # Llama al constructor de la clase para crear el objeto
-            user_obj = User(name, last_name, user_id, user_mail, reason, False, pay, money, sales_phase)
+            user_obj = User(name, last_name, user_id, user_mail, reason, False, payment_method, ticket_price, sales_phase)
 
             if st.session_state['event_type'] == 'bar_event':
 
@@ -191,22 +198,21 @@ class GuiController(SystemController):
                 bar_obj.add_ticket(sales_phase)
 
                 # Asigna el dinero ingresado a su respectivo medio de pago
-                if pay == "Tarjeta":
-                    bar_obj.add_total_card(bar_obj.get_ticket_price(sales_phase), sales_phase)
-                elif pay == "Efectivo":
-                    bar_obj.add_total_cash(bar_obj.get_ticket_price(sales_phase), sales_phase)
+                if payment_method == "Tarjeta":
+                    bar_obj.add_total_card(ticket_price, sales_phase)
+                elif payment_method == "Efectivo":
+                    bar_obj.add_total_cash(ticket_price, sales_phase)
 
-                # Obtiene valores para asginar la utilidad
-                ticket_price = bar_obj.get_ticket_price(sales_phase) - (bar_obj.get_ticket_price(sales_phase) * (discount / 100))
+                bar_obj.set_total_money(ticket_price)
+                total_money = bar_obj.get_total_money()
 
                 # Asigna la utilidad del bar
-                total_bar = ticket_price * 0.2
+                total_bar = total_money * 0.2
                 bar_obj.set_utility(total_bar)
 
                 # Asgina la utilidad a los artistas
                 artist_dict = bar_obj.get_artist_info()
-
-                total_art = (ticket_price * 0.8) / len(artist_dict)
+                total_art = (total_money * 0.8) / len(artist_dict)
 
                 # El _, ignora la clave, ya que no es utiliza y solo obtiene el valor
                 for _, value in artist_dict.items():
@@ -221,22 +227,23 @@ class GuiController(SystemController):
                 theater_obj.add_ticket(sales_phase)
 
                 # Asigna el dinero ingresado a su respectivo medio de pago
-                if pay == "Tarjeta":
-                    theater_obj.add_total_card(theater_obj.get_ticket_price(sales_phase), sales_phase)
-                elif pay == "Efectivo":
-                    theater_obj.add_total_cash(theater_obj.get_ticket_price(sales_phase), sales_phase)
+                if payment_method == "Tarjeta":
+                    theater_obj.add_total_card(ticket_price, sales_phase)
+                elif payment_method == "Efectivo":
+                    theater_obj.add_total_cash(ticket_price, sales_phase)
 
-                ticket_price = theater_obj.get_ticket_price(sales_phase) - (theater_obj.get_ticket_price(sales_phase) * (discount / 100))
+                theater_obj.set_total_money(ticket_price)
+                total_money = theater_obj.get_total_money()
 
                 # Asigna la utilidad del bar
-                total_theater = ticket_price * 0.07
+                total_theater = total_money * 0.07
                 theater_obj.set_utility(total_theater)
 
             if st.session_state['event_type'] == "philanthropic_event":
 
                 phil_obj = st.session_state['dictionary']['philanthropic_record'][event_name]
                 phil_obj.set_users(name, user_obj)
-                phil_obj.add_ticket()
+                phil_obj.add_ticket("N/A")
 
             ans = True
 
@@ -317,7 +324,6 @@ class GuiController(SystemController):
         try:
             # Ingresar al diccionario donde estan los eventos para eliminarlo
             if st.session_state['event_type'] == 'bar_event':
-                st.write(st.session_state['dictionary']['bar_record'][event_name])
                 st.session_state['dictionary']['bar_record'].pop(event_name)
 
             if st.session_state['event_type'] == 'theater_event':

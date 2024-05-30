@@ -11,9 +11,9 @@ class Event:
         self.city = city
         self.event_status = event_status
         self.artist_info = artist_info
-        self.tickets_sold = 0
         self.users = {}
         self.capacity = capacity
+        self.tickets_sold = 0
         self.pre_sale_tickets = 0
         self.regular_sales_tickets = 0
 

@@ -91,18 +91,17 @@ def input_info(gui_controller_obj):
 
         # Muestra un calendario para seleccionar la fecha del evento
         event_date = st.date_input("Selecciona una fecha", date.today())
-
-        opening = st.text_input("Hora de apertura")
-        show_time = st.text_input("Hora del evento")
+        opening = st.time_input("Hora de apertura")
+        show_time = st.time_input("Hora del evento")
         place = st.text_input("Lugar del evento")
         address = st.text_input("Dirección del evento")
         city = st.text_input("Ciudad del evento")
-        capacity = st.number_input("Capacidad del evento", step = 1)
+        capacity = st.number_input("Capacidad del evento", step = 1, min_value = 1)
 
     with col2:
 
         st.markdown("<h3 style = 'text-align: center'> Información artista </h3>", unsafe_allow_html = True)
-        event_status = st.selectbox("Estado del evento", ["Por realizar", "Realizado" "Cancelado", "Aplazado", "Cerrado"])
+        event_status = st.selectbox("Estado del evento", ["Por realizar", "Realizado", "Cancelado", "Aplazado", "Cerrado"])
 
         # Ingresa los valores de boleta dependiendo de la fase
         if st.session_state['event_type'] != "philanthropic_event":
@@ -119,7 +118,7 @@ def input_info(gui_controller_obj):
 
             # Para no generar las mismas claves en las entradas se hace un conteo de artistas
             artist_name = st.text_input(f"Nombre del artista {artist_counter + 1}")
-            artist_price = st.text_input(f"Valor del artista {artist_counter + 1}")
+            artist_price = st.number_input(f"Valor del contrato del artista {artist_counter + 1}", step = 1)
             artist_time = st.text_input(f"Hora de presentación del artista {artist_counter + 1}")
 
             # Crear objeto del artista
@@ -216,16 +215,13 @@ def buy_ticket(gui_controller_obj):
 
             select = st.selectbox('Selecciona una opción:', options)
 
-            if gui_controller_obj.get_sold(select) < gui_controller_obj.get_capacity(select):
+            ans = False
+            if gui_controller_obj.get_status(select) == "Realizado":
+                ans = True
+
+            if gui_controller_obj.get_sold(select) < gui_controller_obj.get_capacity(select) and gui_controller_obj.get_status(select) != 'Realizado':
 
                 st.write('Nombre del evento:', select)
-
-                # Selección de fase para saber el precio de la boleta
-                sales_phase = st.radio("Fase de venta", ['Preventa', 'Venta regular'], index = 0, format_func = lambda x: x.upper())
-                ticket_price = gui_controller_obj.get_ticket_price(select, sales_phase)
-                st.write('Valor de la boleta: ', ticket_price)
-
-                pay = st.radio("Método de pago", ['Tarjeta', 'Efectivo'], index = 0, format_func = lambda x: x.upper())
 
                 first_name = st.text_input("Nombre comprador")
                 last_name = st.text_input("Apellido comprador")
@@ -233,31 +229,42 @@ def buy_ticket(gui_controller_obj):
                 user_mail = st.text_input("Correo electronico")
                 reason = st.text_input("Como se entero del evento")
 
-                # Asignar valor de descuento
-                discount = st.radio("Aplicar descuento", ['No', 'Si'], index = 0, format_func = lambda x: x.upper())
-
-                discount_value = None
-                if discount == 'Si':
-                    discount_value = st.number_input("Porcentaje del descuento", step = 1)
-
                 if st.session_state['event_type'] == "philanthropic_event":
+
+                    val = 0
+                    st.write("Boleta de cortesia por un valor de: ", val)
 
                     if st.button("Registrar usuario", use_container_width = True):
 
-                        ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason, 0)
+                        ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason, "N/A", "N/A", 0)
 
                         if ans:
                             st.success("El usuario fue registrado exitosamente")
                         elif not ans:
                             st.warning("El usuario no fue registrado exitosamente")
+
                 else:
+
+                    # Selección de fase para saber el precio de la boleta
+                    sales_phase = st.radio("Fase de venta", ['Preventa', 'Venta regular'], index=0, format_func=lambda x: x.upper())
+                    ticket_price = gui_controller_obj.get_ticket_price(select, sales_phase)
+                    st.write('Valor de la boleta: ', ticket_price)
+
+                    payment_method = st.radio("Método de pago", ['Tarjeta', 'Efectivo'], index=0, format_func=lambda x: x.upper())
+
+                    # Asignar valor de descuento
+                    discount = st.radio("Aplicar descuento", ['No', 'Si'], index = 0, format_func = lambda x: x.upper())
+
+                    if discount == 'Si':
+                        # Pregunta el valor del descuento
+                        discount_value = st.number_input("Porcentaje del descuento", step = 1)
+                        ticket_price = ticket_price - (ticket_price * discount_value / 100)
+                        st.write('Valor de la boleta con descuento: ', ticket_price)
 
                     if st.button("Comprar boleta", use_container_width = True):
 
-                        if discount == 'Si':
-                            ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason, discount_value, sales_phase, pay, ticket_price)
-                        else:
-                            ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason, 0, sales_phase, pay, ticket_price)
+                        # Crear el objeto con toda la información del usuario
+                        ans = gui_controller_obj.new_user(first_name, last_name, user_id, user_mail, select, reason, sales_phase, payment_method, ticket_price)
 
                         pdf_bytes = gui_controller_obj.create_pdf(select, first_name)
                         st.download_button(label = "Descargar PDF", data = pdf_bytes, file_name = "boleta.pdf", mime = "application/pdf")
@@ -268,7 +275,11 @@ def buy_ticket(gui_controller_obj):
                             st.warning("La boleta no fue creada exitosamente")
 
             else:
-                st.write("La capacidad del evento esta completa")
+
+                if not ans:
+                    st.write("La capacidad del evento esta completa")
+                else:
+                    st.write("El evento ya fue realizado")
     else:
         st.write("No hay eventos creados")
 

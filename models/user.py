@@ -1,14 +1,14 @@
 class User:
 
-    def __init__(self, first_name, last_name, identification, email, reason, attendance, pay, money, sale_phase):
+    def __init__(self, first_name, last_name, identification, email, reason, attendance, payment_method, ticket_price, sale_phase):
         self.first_name = first_name
         self.last_name = last_name
         self.identification = identification
         self.email = email
         self.reason = reason
         self.attendance = attendance
-        self.user_money = money
-        self.pay = pay
+        self.user_ticket_price = ticket_price
+        self.payment_method = payment_method
         self.sale_phase = sale_phase
 
     def get_first_name(self):
@@ -29,5 +29,5 @@ class User:
     def get_sale_phase(self):
         return self.sale_phase
 
-    def get_pay(self):
-        return self.pay
+    def get_payment_method(self):
+        return self.payment_method
