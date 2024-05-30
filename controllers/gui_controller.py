@@ -12,11 +12,7 @@ import pandas as pd
 
 # Librerias para el manejo del PDF
 from io import BytesIO
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.lib.units import inch
 from reportlab.pdfgen import canvas
-from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Image, Spacer
 
 
 # Relacion entre las funciones de las clases y el view (la parte grafica)
@@ -203,6 +199,11 @@ class GuiController(SystemController):
                 # Sumar el tipo de boleta vendida
                 bar_obj.add_ticket(sales_phase)
 
+                if sales_phase == "Preventa":
+                    bar_obj.set_total_sale_phase("Preventa", ticket_price)
+                elif sales_phase == "Venta regular":
+                    bar_obj.set_total_sale_phase("Venta regular", ticket_price)
+
                 # Asigna el dinero ingresado a su respectivo medio de pago
                 if payment_method == "Tarjeta":
                     bar_obj.add_total_card(ticket_price, sales_phase)
@@ -231,6 +232,11 @@ class GuiController(SystemController):
                 # Llama a una función para añadir compradores a ese evento
                 theater_obj.set_users(name, user_obj)
                 theater_obj.add_ticket(sales_phase)
+
+                if sales_phase == "Preventa":
+                    theater_obj.set_total_sale_phase("Preventa", ticket_price)
+                elif sales_phase == "Venta regular":
+                    theater_obj.set_total_sale_phase("Venta regular", ticket_price)
 
                 # Asigna el dinero ingresado a su respectivo medio de pago
                 if payment_method == "Tarjeta":
@@ -678,9 +684,9 @@ class GuiController(SystemController):
             elif value.get_sale_phase() == 'Venta regular':
                 num_regular += 1
 
-            if value.get_pay() == 'Efectivo':
+            if value.get_payment_method() == 'Efectivo':
                 num_cash += 1
-            elif value.get_pay() == 'Tarjeta':
+            elif value.get_payment_method() == 'Tarjeta':
                 num_card += 1
 
         data_sale = {
@@ -730,7 +736,7 @@ class GuiController(SystemController):
     @staticmethod
     def get_info(event_name):
 
-        date, place, capacity = "", "", ""
+        date, place, capacity = "", "", 0
         if st.session_state['event_type'] == 'bar_event':
             bar_obj = st.session_state['dictionary']['bar_record'][event_name]
             date = bar_obj.get_event_date()
@@ -753,13 +759,17 @@ class GuiController(SystemController):
 
     @staticmethod
     def update_count():
+
         count_dict = {}
         diccionarios = st.session_state['dictionary']
 
         # Recorremos cada diccionario en el diccionario principal
         for d in diccionarios.values():
             for key, obj in d.items():
+
                 event_date = obj.get_event_date()
+                event_name = obj.get_event_name()
+                total_money = obj.get_total_money()
 
                 event_type = " "
                 if st.session_state['event_type'] == 'bar_event':
@@ -771,9 +781,26 @@ class GuiController(SystemController):
 
                 if event_date in count_dict:
                     count_dict[event_date]['count'] += 1
+                    count_dict[event_date]['event_name'].append(event_name)
+                    count_dict[event_date]['total_money'].append(total_money)
                 else:
-                    count_dict[event_date] = {'count': 1, 'event_type': event_type}
+                    count_dict[event_date] = {'count': 1, 'event_type': event_type, 'event_names': [event_name], 'total_moneys': [total_money]}
 
         # Convertimos el diccionario auxiliar en una lista de tuplas
-        result = [(event_date, data['count'], data['event_type']) for event_date, data in count_dict.items()]
+        result = [(event_date, data['count'], data['event_type'], data['event_names'], data['total_moneys']) for event_date, data in count_dict.items()]
         return result
+
+    @staticmethod
+    def get_total_phase(sale_phase, event_name):
+
+        ans = 0
+
+        if st.session_state['event_type'] == 'bar_event':
+            bar_obj = st.session_state['dictionary']['bar_record'][event_name]
+            ans = bar_obj.get_total_sale_phase(sale_phase)
+
+        if st.session_state['event_type'] == 'theater_event':
+            theater_obj = st.session_state['dictionary']['theater_record'][event_name]
+            ans = theater_obj.get_total_sale_phase(sale_phase)
+
+        return ans

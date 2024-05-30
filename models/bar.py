@@ -63,3 +63,20 @@ class Bar(Event):
 
     def get_total_money(self):
         return self.ticket_info.get_total_money()
+
+    def set_total_sale_phase(self, sales_phase, total_money):
+
+        if sales_phase == "Preventa":
+            self.ticket_info.set_total_pre_sale(total_money)
+        elif sales_phase == "Venta regular":
+            self.ticket_info.set_total_regular(total_money)
+
+    def get_total_sale_phase(self, sales_phase):
+
+        ans = 0
+        if sales_phase == "Preventa":
+            ans = self.ticket_info.get_total_pre_sale()
+        elif sales_phase == "Venta regular":
+            ans = self.ticket_info.get_total_regular()
+
+        return ans

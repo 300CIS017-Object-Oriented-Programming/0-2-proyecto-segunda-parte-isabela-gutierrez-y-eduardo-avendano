@@ -62,3 +62,17 @@ class Theater(Event):
 
     def get_total_money(self):
         return self.ticket_info.get_total_money()
+
+    def set_total_sale_phase(self, sales_phase, total_money):
+
+        if sales_phase == "Preventa":
+            self.ticket_info.set_total_pre_sale(total_money)
+        elif sales_phase == "Venta regular":
+            self.ticket_info.set_total_regular(total_money)
+
+    def get_total_sale_phase(self, sales_phase):
+
+        if sales_phase == "Preventa":
+            self.ticket_info.get_total_pre_sale()
+        elif sales_phase == "Venta regular":
+            self.ticket_info.get_total_regular()

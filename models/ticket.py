@@ -17,17 +17,55 @@ class Ticket:
     def get_ticket_price_regular(self):
         return self.ticket_price_regular
 
+
+
+
+
+
+
+
+
+
+
     def get_total_pre_sale(self):
         return self.total_pre_sale
 
     def set_total_pre_sale(self, total_pre_sale):
-        self.total_pre_sale = total_pre_sale
+        self.total_pre_sale += total_pre_sale
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def get_total_regular(self):
         return self.total_regular
 
     def set_total_regular(self, total_regular):
-        self.total_regular = total_regular
+        self.total_regular += total_regular
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     def get_total_cash_pre(self):
         return self.total_cash_pre

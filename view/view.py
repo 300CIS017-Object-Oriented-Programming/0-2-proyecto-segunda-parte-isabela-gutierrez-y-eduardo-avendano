@@ -483,52 +483,33 @@ def report_page(gui_controller_obj):
             # Almacena la informacion en una sesion de estado para que no elimine al seleccionar una opcion
             if report_type == "Reporte boletas":
 
-                st.session_state['event_data'] = {
-                    'event_name': event_name,
-                    'pre_sale_tickets': gui_controller_obj.get_pre_sale_ticket(event_name),
-                    'regular_sales_tickets': gui_controller_obj.get_regular_sales_tickets(event_name),
-                    'total_sold': gui_controller_obj.get_sold(event_name),
-                    'ticket_price_preventa': gui_controller_obj.get_ticket_price(event_name, "Preventa"),
-                    'ticket_price_regular': gui_controller_obj.get_ticket_price(event_name, "Venta regular"),
-                    'cash_preventa': gui_controller_obj.get_cash(event_name, "Preventa"),
-                    'card_preventa': gui_controller_obj.get_card(event_name, "Preventa"),
-                    'cash_regular': gui_controller_obj.get_cash(event_name, "Venta regular"),
-                    'card_regular': gui_controller_obj.get_card(event_name, "Venta regular"),
-                    'users_dict': gui_controller_obj.get_dict_users(event_name),
-                }
+                # Muestra la informacion sobre las boletas vendidas
+                st.write("Boletas de preventa: ", gui_controller_obj.get_pre_sale_ticket(event_name))
+                st.write("Boletas de venta regular: ", gui_controller_obj.get_regular_sales_tickets(event_name))
+                st.write("Boletas totales: ", gui_controller_obj.get_sold(event_name))
 
-                # Muestra la informacion almacena en la sesion de estado
-                if 'event_data' in st.session_state:
-                    event_data = st.session_state['event_data']
-                    st.write("Boletas de preventa: ", event_data['pre_sale_tickets'])
-                    st.write("Boletas de venta regular: ", event_data['regular_sales_tickets'])
-                    st.write("Boletas totales: ", event_data['total_sold'])
+                if st.session_state['event_type'] == "philanthropic_event":
+                    st.write("Boletas de cortesia: ", gui_controller_obj.get_sold(event_name))
+                else:
+                    st.write("Boletas de cortesia: ", 0)
 
-                    if st.session_state['event_type'] == "philanthropic_event":
-                        st.write("Boletas de cortesia: ", event_data['total_sold'])
-                    else:
-                        val = 0
-                        st.write("Boletas de cortesia: ", val)
-
-                    if st.session_state['event_type'] != "philanthropic_event":
-                        st.write("Ingresos totales preventa: ", event_data['ticket_price_preventa'] * event_data['pre_sale_tickets'])
-                        st.write("Ingresos totales venta regular: ", event_data['ticket_price_regular'] * event_data['regular_sales_tickets'])
+                if st.session_state['event_type'] != "philanthropic_event":
+                    st.write("Ingresos totales preventa: ", gui_controller_obj.get_total_phase("Preventa", event_name))
+                    st.write("Ingresos totales venta regular: ", gui_controller_obj.get_total_phase("Venta regular", event_name))
 
             elif report_type == "Reporte financiero":
 
-                event_data = st.session_state['event_data']
                 st.title("Reporte financiero")
                 st.subheader("Boletería de preventa")
-                st.write("Efectivo", event_data['cash_preventa'])
-                st.write("Tarjeta", event_data['card_preventa'])
+                st.write("Efectivo", gui_controller_obj.get_cash(event_name, "Preventa"))
+                st.write("Tarjeta", gui_controller_obj.get_card(event_name, "Preventa"))
 
                 st.subheader("Boletería de venta regular")
-                st.write("Efectivo", event_data['cash_regular'])
-                st.write("Tarjeta", event_data['card_regular'])
+                st.write("Efectivo", gui_controller_obj.get_cash(event_name, "Venta regular"))
+                st.write("Tarjeta", gui_controller_obj.get_card(event_name, "Venta regular"))
 
             elif report_type == "Reporte de compradores":
 
-                event_data = st.session_state['event_data']
                 st.title("Reporte de datos de los compradores")
                 st.subheader("Información compradores")
 
@@ -537,8 +518,10 @@ def report_page(gui_controller_obj):
                 users = list(dictionary_users.keys())
                 username = st.selectbox('Selecciona una opción:', users)
 
-                # Mostrar información del usuario seleccionado
-                user_info = event_data['users_dict'][username]
+                # Asigna el valor del diccionario a una variable
+                user_info = dictionary_users[username]
+
+                # Obtiene la informacion de los usuarios
                 st.write("Nombre: ", user_info.get_first_name())
                 st.write("Apellido: ", user_info.get_last_name())
                 st.write("Numero de indentificación: ", user_info.get_identification())
@@ -591,11 +574,18 @@ def report_by_artist(gui_controller_obj):
     st.title("Buscar evento por artista")
     art_name = st.text_input("Nombre del artista")
 
-    if st.button("Buscar", use_container_width=True):
+    if st.button("Buscar", use_container_width = True):
         event_name, event_type = gui_controller_obj.find_event(art_name)
         event_date, place, capacity = gui_controller_obj.get_info(event_name)
-
         ticket = gui_controller_obj.get_sold(event_name)
+
+        # Asigna el tipo de evento dependiendo del diccionario donde esta almacenado
+        if event_type == "bar_record":
+            event_type = "bar_event"
+        elif event_type == "theater_record":
+            event_type = "theater_event"
+        elif event_type == "philanthropic_record":
+            event_type = "philanthropic_event"
 
         if capacity == 0:
             percentage = 0
@@ -603,36 +593,37 @@ def report_by_artist(gui_controller_obj):
             percentage = (ticket / capacity) * 100
 
         st.session_state['event_type'] = event_type
+
         st.write("Nombre del evento: ", event_name)
         st.write("Fecha del evento: ", event_date)
         st.write("Lugar: ", place)
         st.write("Numero de boletas vendidas:", ticket)
         st.write("Porcentaje de aforo cubierto:", percentage)
 
-    if st.button("Regresar", use_container_width=True):
+    if st.button("Regresar", use_container_width = True):
         st.session_state['page'] = "show_view"
         st.rerun()
 
 
 def dashboard(gui_controller_obj):
     st.title("Dashboard de Gestión de Eventos")
-    
+
     if 'dictionary' in st.session_state:
         # Obtener los datos de eventos
         result = gui_controller_obj.update_count()
-        
+
         # Verificar los datos devueltos
         if len(result) == 0:
             st.write("No se encontraron eventos.")
             return
-        
+
         # Asegurar que los datos tienen la estructura correcta
-        if len(result[0]) == 3:
-            df = pd.DataFrame(result, columns=['Date', 'Count', 'Event_Type'])
+        if len(result[0]) == 5:
+            df = pd.DataFrame(result, columns=['Date', 'Count', 'Event Type', 'Event Name', 'Total Money'])
         else:
             st.write("Formato de datos inesperado devuelto por update_count")
             return
-        
+
         df['Date'] = pd.to_datetime(df['Date'])  # Convertir a formato de fecha
 
         # Definir el rango de fechas
@@ -644,12 +635,12 @@ def dashboard(gui_controller_obj):
         filtered_df = df[(df['Date'] >= pd.to_datetime(start_date)) & (df['Date'] <= pd.to_datetime(end_date))]
 
         # Gráfico de cantidad de eventos por tipo
-        event_type_count = filtered_df['Event_Type'].value_counts()
-        fig1, ax1 = plt.subplots(figsize = (8, 4))
+        event_type_count = filtered_df['Event Type'].value_counts()
+        fig1, ax1 = plt.subplots(figsize=(8, 4))
         ax1.bar(event_type_count.index, event_type_count.values)
-        ax1.set_xlabel('Tipo de Evento', fontsize = 10)
-        ax1.set_ylabel('Cantidad de Eventos', fontsize = 10)
-        ax1.set_title('Cantidad de Eventos por Tipo', fontsize = 12)
+        ax1.set_xlabel('Tipo de Evento', fontsize=10)
+        ax1.set_ylabel('Cantidad de Eventos', fontsize=10)
+        ax1.set_title('Cantidad de Eventos por Tipo', fontsize=12)
         st.pyplot(fig1)
 
         # Mostrar la gráfica de eventos por fecha
@@ -663,6 +654,7 @@ def dashboard(gui_controller_obj):
         # Mostrar tabla con los datos filtrados
         st.write("Datos de eventos en el rango de fechas seleccionado:")
         st.dataframe(filtered_df)
+
     else:
         st.write("No hay eventos creados")
 
