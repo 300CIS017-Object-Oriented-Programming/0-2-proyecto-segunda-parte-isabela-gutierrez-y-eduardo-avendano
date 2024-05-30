@@ -701,7 +701,6 @@ class GuiController(SystemController):
 
     @staticmethod
     def update_count():
-
         count_dict = {}
         diccionarios = st.session_state['dictionary']
 
@@ -709,11 +708,12 @@ class GuiController(SystemController):
         for d in diccionarios.values():
             for key, obj in d.items():
                 event_date = obj.get_event_date()
+                event_type = obj.get_event_type()
                 if event_date in count_dict:
-                    count_dict[event_date] += 1
+                    count_dict[event_date]['count'] += 1
                 else:
-                    count_dict[event_date] = 1
+                    count_dict[event_date] = {'count': 1, 'event_type': event_type}
 
         # Convertimos el diccionario auxiliar en una lista de tuplas
-        result = [(event_date, count) for event_date, count in count_dict.items()]
+        result = [(event_date, data['count'], data['event_type']) for event_date, data in count_dict.items()]
         return result

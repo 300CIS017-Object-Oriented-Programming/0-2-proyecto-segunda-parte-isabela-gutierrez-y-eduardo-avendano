@@ -63,3 +63,6 @@ class Bar(Event):
             ans = self.total_cash_regular
 
         return ans
+        
+    def get_event_type(self):
+        return "Bar"

@@ -604,41 +604,84 @@ def report_by_artist(gui_controller_obj):
 
 
 def dashboard(gui_controller_obj):
-
-    st.title("Dashboard")
+    st.title("Dashboard de Gestión de Eventos")
+    
     if 'dictionary' in st.session_state:
-
+        # Obtener los datos de eventos
         result = gui_controller_obj.update_count()
+        
+        # Verificar los datos devueltos
+        if len(result) == 0:
+            st.write("No se encontraron eventos.")
+            return
+        
+        # Asegurar que los datos tienen la estructura correcta
+        if len(result[0]) == 3:
+            df = pd.DataFrame(result, columns=['Date', 'Count', 'Event_Type'])
+        else:
+            st.write("Formato de datos inesperado devuelto por update_count")
+            return
+        
+        df['Date'] = pd.to_datetime(df['Date'])  # Convertir a formato de fecha
 
-        # Convierte las tuplas en un DataFrame para separar los datos
-        df = pd.DataFrame(result, columns = ['Date', 'Count'])
-        df['Date'] = pd.to_datetime(df['Date'])  # Lo muestra en formato de fechas
-
-        # Definir el rango de fechas, se establece como mínimo y maximo del DataFrame
-        st.title('Evento por fechas')
+        # Definir el rango de fechas
+        st.title('Eventos por Fechas')
         start_date = st.date_input('Fecha de inicio', df['Date'].min())
         end_date = st.date_input('Fecha de fin', df['Date'].max())
 
-        # Filtramos el DataFrame según el rango de fechas ingresado
+        # Filtrar el DataFrame según el rango de fechas
         filtered_df = df[(df['Date'] >= pd.to_datetime(start_date)) & (df['Date'] <= pd.to_datetime(end_date))]
 
-        # Crear la gráfica con tamaño personalizado
-        fig, ax = plt.subplots(figsize = (8, 4))  # Tamaño en pulgadas (ancho, alto)
-        ax.plot(filtered_df['Date'], filtered_df['Count'], marker = 'o', linestyle='-')
-        ax.set_xlabel('Fecha', fontsize = 10)  # Tamaño de la fuente del eje x
-        ax.set_ylabel('Eventos por fecha', fontsize = 10)  # Tamaño de la fuente del eje y
-        ax.set_title('Eventos', fontsize = 12)  # Tamaño de la fuente del título
+        # Gráfico de cantidad de eventos por tipo
+        event_type_count = filtered_df['Event_Type'].value_counts()
+        fig1, ax1 = plt.subplots(figsize=(8, 4))
+        ax1.bar(event_type_count.index, event_type_count.values)
+        ax1.set_xlabel('Tipo de Evento', fontsize=10)
+        ax1.set_ylabel('Cantidad de Eventos', fontsize=10)
+        ax1.set_title('Cantidad de Eventos por Tipo', fontsize=12)
+        st.pyplot(fig1)
 
-        # Ajustar el tamaño de la fuente de los ticks del eje x y eje y
-        ax.tick_params(axis='x', labelsize = 8)
-        ax.tick_params(axis='y', labelsize = 8)
+        # Mostrar la gráfica de eventos por fecha
+        fig2, ax2 = plt.subplots(figsize=(8, 4))
+        ax2.plot(filtered_df['Date'], filtered_df['Count'], marker='o', linestyle='-')
+        ax2.set_xlabel('Fecha', fontsize=10)
+        ax2.set_ylabel('Eventos por fecha', fontsize=10)
+        ax2.set_title('Eventos', fontsize=12)
+        st.pyplot(fig2)
 
-        # Mostrar la gráfica en Streamlit
-        st.pyplot(fig)
-
+        # Mostrar tabla con los datos filtrados
+        st.write("Datos de eventos en el rango de fechas seleccionado:")
+        st.dataframe(filtered_df)
     else:
         st.write("No hay eventos creados")
 
     if st.button("Regresar", use_container_width=True):
         st.session_state['page'] = "show_view"
         st.rerun()
+
+def register_attendance(gui_controller_obj):
+    st.title("Gestión de Ingreso al Evento")
+
+    # Supongamos que get_ticket_data devuelve una lista de tuplas con (ticket_id, buyer_name, event_name)
+    ticket_data = gui_controller_obj.get_ticket_data()
+    ticket_df = pd.DataFrame(ticket_data, columns=['ticket_id', 'buyer_name', 'event_name'])
+
+    # Búsqueda de boletas vendidas o comprador
+    search_term = st.text_input("Buscar por nombre del comprador o ID de la boleta")
+
+    if st.button("Buscar"):
+        if search_term.isdigit():
+            result_df = ticket_df[ticket_df['ticket_id'] == int(search_term)]
+        else:
+            result_df = ticket_df[ticket_df['buyer_name'].str.contains(search_term, case=False)]
+
+        if result_df.empty:
+            st.write("No se encontraron resultados.")
+        else:
+            st.write("Resultados de la búsqueda:")
+            st.dataframe(result_df)
+
+            if st.button("Registrar Asistencia"):
+                # Lógica para registrar la asistencia (esto puede implicar actualizar una base de datos)
+                gui_controller_obj.register_attendance(result_df['ticket_id'].values[0])
+                st.write("Asistencia registrada para la boleta/comprador seleccionado.")
