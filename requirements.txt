@@ -1,0 +1,16 @@
+# Instalar versión necesaria de Streamlit
+streamlit == 1.30.0
+
+# Para ejecutar las pruebas unitarias
+pytest~=8.2.0
+
+# Generar el PDF de la boleta
+reportlab~=4.2.0
+
+# Crear las graficas
+plotly
+pandas
+matplotlib
+
+# Convertir graficas a Excel
+xlsxwriter
